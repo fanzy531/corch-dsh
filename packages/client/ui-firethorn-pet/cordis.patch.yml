@@ -1,0 +1,5 @@
+# The firethorn pet is opt-in: installing this bundle adds one dual-face Web
+# plugin row without changing the shipped web-app bundle.
+- insert:
+    - id: ui-firethorn-pet
+      name: '@deepseek-ai/dsh-client-ui-firethorn-pet'

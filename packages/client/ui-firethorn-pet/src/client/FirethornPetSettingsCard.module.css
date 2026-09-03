@@ -1,0 +1,59 @@
+/* Firethorn's feature-owned card styling, using the DSH settings tokens. */
+
+.card {
+  list-style: none;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-3);
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.header:focus-visible,
+.save:focus-visible,
+.discard:focus-visible,
+.reset:focus-visible,
+.toggle input:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 2px;
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.name { color: var(--dsw-alias-label-primary); font-size: 15px; font-weight: 600; }
+.description { color: var(--dsw-alias-label-tertiary); font-size: 13px; line-height: 1.5; }
+.pending { color: var(--dsw-alias-label-secondary); font-size: 11px; white-space: nowrap; }
+.chevron { color: var(--dsw-alias-label-tertiary); font-size: 18px; }
+.body { margin: 0 16px; padding: 12px 0 8px; border-top: 1px solid var(--dsw-alias-border-l2); }
+.readOnly, .failed { color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.5; }
+.toggle { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.toggle input { margin-top: 3px; accent-color: var(--dsw-alias-brand-primary); }
+.toggleText { display: flex; flex-direction: column; gap: 3px; }
+.label { color: var(--dsw-alias-label-primary); font-size: 14px; }
+.hint { color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 1.5; }
+.reset { margin: 10px 0 0; border: 0; padding: 0; background: none; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 12px; cursor: pointer; }
+.footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--dsw-alias-border-l2); }
+.failed { flex: 1; margin: 0; color: var(--dsw-alias-label-error); }
+.discard, .save { border: 1px solid transparent; border-radius: 8px; padding: 5px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+.discard { border-color: var(--dsw-alias-border-l2); background: none; color: var(--dsw-alias-label-secondary); }
+.save { background: var(--dsw-alias-label-primary); color: var(--dsw-alias-bg-layer-3); }
+.discard:disabled, .save:disabled, .reset:disabled { opacity: .4; cursor: default; }
