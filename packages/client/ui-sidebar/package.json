@@ -45,7 +45,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "clsx": "^2.0.0"
+    "clsx": "^2.0.0",
+    "react-icons": "5.7.0"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-client-locale": "workspace:^",

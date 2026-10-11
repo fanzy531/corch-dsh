@@ -40,7 +40,6 @@
 | `@deepseek-ai/dsh-tool-subagent` | `subagent` | `ctx.tools`、`ctx.subagents`、`ctx.systemPrompt` | `tool/call`、`tool/result`、`child session events through the chosen provider` | `subagent`、`subagent_fork` | 注册的工具名称取决于加载时 `toolName` 配置（默认为 `subagent`）；上述 schema 对应默认值。随产品发布的组合会为每个 subagent 后端加载一次该包，因此模型还会看到绑定到 fork 后端的 `subagent_fork`。每个实例的描述、`run_in_background` 参数与 system prompt 策略取决于它自己的 `backgroundMode` 和 `enableRunInBackground`，因此两个随附 schema 并不相同：`subagent` 为 `continuable`，省略参数时默认后台运行，并由 runtime 自动投递结束结果；`subagent_fork` 保持 `one-shot`，省略参数时默认前台运行。详见 `packages/bundle/base/cordis.patch.yml` 和 `examples/acp-agent/cordis.yml`。 |
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`、`list_agents`、`send_message` | `ctx.tools`、`ctx.subagents`、`ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`、`tool/result`、`child session events through ctx.subagents` | - | 这些是控制可继续后台 subagent 的全局命名工具：绑定提供方的 `tool-subagent` 实例注册不同的委派工具；本包注册一次 `send_message` 和 `interrupt_agent`，另由 `list_agents` 通过单独加载的 `/list-agents` 插件提供，其目录行使用 sessionProjections 和实时 Agent 注册表。 |
 | `@deepseek-ai/dsh-tool-subagent-report` | `report` | `ctx.subagents`、`ctx.systemPrompt`、`a live continuable in-process child Agent` | `tool/call`、`tool/result`、`a user-role message in the direct parent session` | - | 按可继续的进程内子级注册，而非全局注册，因此该 schema 仅在这种子级内部可见，并且不受其全局 `toolFilter` 影响。同一份贡献还会安装子级作用域的 `tool:report` 系统提示词 section，本目录不渲染该 section。面向父级的 `send_message` 工具单独安装。 |
-| `@deepseek-ai/dsh-tool-clab-creator` | `clab_creator` | `ctx.tools`、`ctx.systemPrompt`、`a calling Agent for the current session` | `tool/call`、`clab/content in the calling session`、`tool/result` | - | `clab_creator` 向当前 Conversation 追加一条仅日志 Markdown 快照；客户端工作台将该事件渲染为 keyed Conversation 节点。 |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`、`job_list`、`job_output` | `ctx.tools`、`ctx.jobs`、`ctx.systemPrompt` | `tool/call`、`tool/result`、`user/message via agent.inject() for background completion notices` | - | 与任务种类无关的后台任务控制器：后台 bash 命令、PTY 发送和 subagent 都通过相同的 3 个工具读取、列出和终止。加载该插件会挂接控制器，从而启用生产方的 `ctx.jobs.start()`。 |
 | `@deepseek-ai/dsh-experimental-tool-agent-team` | `followup_task`、`interrupt_agent`、`list_agents`、`send_message`、`spawn_teammate`、`team_task_create`、`team_task_get`、`team_task_list`、`team_task_update`、`wait_agent` | `ctx.tools`、`ctx.systemPrompt`、`ctx.agentTeams`、`an exact live Team member Agent` | `tool/call`、`team/member`、`team/message/queued`、`team/message/delivered`、`team/task`、`tool/result` | - | 这 10 个工具限定于隐式 Team Lead 与持久 teammate 作用域。随产品发布的 dsh-base bundle 默认禁用该包；文档中的 Agent Teams profile patch 会启用它，并禁用旧 continuable child 的同名控制工具。 |
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`、`owning Agent session` | `tool/call`、`todo/write`、`tool/result` | - | todo_write 是会话所有的状态；UI 将最新的 todo/write 事件渲染为检查清单。`allowParallelInProgress` 是没有默认值的必填项，因此本目录明确选择 `true`，对应描述允许同时存在多个 `in_progress` 项。选择 `false` 的部署会获得同一工具，但描述会要求只能有 1 个活动任务。 |
@@ -1641,67 +1640,6 @@ lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，�
 来源：[`packages/subagent/tool-subagent-report/src/index.ts`](../packages/subagent/tool-subagent-report/src/index.ts)
 
 按可继续的进程内子级注册，而非全局注册，因此该 schema 仅在这种子级内部可见，并且不受其全局 `toolFilter` 影响。同一份贡献还会安装子级作用域的 `tool:report` 系统提示词 section，本目录不渲染该 section。面向父级的 `send_message` 工具单独安装。
-
-<a id="deepseek-aidsh-tool-clab-creator"></a>
-
-## `@deepseek-ai/dsh-tool-clab-creator`
-
-### `clab_creator`
-
-保存当前内容创作 Conversation 的一份 Markdown 快照。在搜索、列大纲、写草稿或定稿后使用。
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "stage": {
-      "type": "string",
-      "description": "Snapshot stage: outline, draft, or final.",
-      "enum": [
-        "outline",
-        "draft",
-        "final"
-      ]
-    },
-    "title": {
-      "type": "string",
-      "description": "Current project title."
-    },
-    "markdown": {
-      "type": "string",
-      "description": "The complete Markdown snapshot to save."
-    },
-    "platform": {
-      "type": "string",
-      "description": "Target platform: xiaohongshu or wordpress.",
-      "enum": [
-        "xiaohongshu",
-        "wordpress"
-      ]
-    },
-    "status": {
-      "type": "string",
-      "description": "Project status after saving: draft, final, or published.",
-      "enum": [
-        "draft",
-        "final",
-        "published"
-      ]
-    }
-  },
-  "required": [
-    "stage",
-    "title",
-    "markdown",
-    "platform",
-    "status"
-  ]
-}
-```
-
-来源：[`packages/workflow/tool-clab-creator/src/index.ts`](../packages/workflow/tool-clab-creator/src/index.ts)
-
-`clab_creator` 向当前 Conversation 追加一条仅日志 Markdown 快照；客户端工作台将该事件渲染为 keyed Conversation 节点。
 
 <a id="deepseek-aidsh-tool-jobs"></a>
 

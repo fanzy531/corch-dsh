@@ -96,9 +96,9 @@ function mountFrame() {
 }
 
 function tracks(frame: HTMLElement): number[] {
-  const m = /^(\d+)px (\d+)px minmax\(0, 1fr\)$/.exec(frame.style.gridTemplateColumns)
+  const m = /^(\d+)px (\d+)px (\d+)px minmax\(0, 1fr\)$/.exec(frame.style.gridTemplateColumns)
   if (m === null) throw new Error(`unexpected template: ${frame.style.gridTemplateColumns}`)
-  return [Number(m[1]), Number(m[2])]
+  return [Number(m[2]), Number(m[3])]
 }
 
 function drag(handle: Element, fromX: number, toX: number): void {

@@ -7,7 +7,8 @@
  * same top-down order) on one fade that ends with the slide. The bottom-pinned
  * settings control only fades. The workspace/session browsing region between
  * the New Session button and the foot is the `sidebar.workspaces` chain's,
- * and the foot holds `sidebar.settings` plus `sidebar.footer.action`; the shell
+ * and the foot holds `sidebar.footer.action`; the global settings trigger is
+ * rendered in App Rail and the shell
  * hands them the wide flag (plus an expand request callback for the browser).
  *
  * The column also owns whether the scroll regions nested in it draw a
@@ -17,11 +18,10 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
-import {
-  FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+import { FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SidebarRootComponentProps } from './contract/slots.ts'
 import css from './SidebarRoot.module.css'
+import { selectSidebarMode, useSidebarMode } from './mode-store.ts'
 
 /** Wide-content unmount delay; matches the 150ms wide-content fade-out. */
 const COLLAPSE_SETTLE_MS = 150
@@ -45,14 +45,16 @@ export function SidebarRoot({
   startSession,
   toggleSidebar,
   closeDetails,
+  openDetails = () => undefined,
   t,
   renderSlot,
   renderSlotChain,
 }: SidebarRootComponentProps) {
-  const [sidebarMode, setSidebarModeState] = useState<'sessions' | 'projects'>('sessions')
-  const setSidebarMode = (mode: 'sessions' | 'projects'): void => {
+  const sidebarMode = useSidebarMode()
+  const setSidebarMode = (mode: 'sessions' | 'curriculum' | 'interviews'): void => {
     if (mode === 'sessions') closeDetails()
-    setSidebarModeState(mode)
+    else openDetails()
+    selectSidebarMode(mode)
   }
   useEffect(() => {
     if (sidebarMode === 'sessions') closeDetails()
@@ -135,103 +137,91 @@ export function SidebarRoot({
       }}
       onPointerLeave={() => { armLinger() }}
     >
-      <div className={css.logoRow}>
-        {/* Expanded, the brand doubles as a New Session shortcut; the
+      <div className={css.sidebarPane}>
+        <div className={css.logoRow}>
+          {/* Expanded, the brand doubles as a New Session shortcut; the
             collapsed rail's logo is the expand toggle below instead. */}
-        {wide && (
-          <button
-            type="button"
-            className={clsx(css.brand, css.wide)}
-            aria-label={t('session.new.label')}
-            onClick={() => { startSession() }}
-          >
-            <span className={css.brandIdentity} aria-hidden="true">
-              <span className={css.brandMark}>
-                {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
+          {wide && (
+            <button
+              type="button"
+              className={clsx(css.brand, css.wide)}
+              aria-label={t('session.new.label')}
+              onClick={() => { startSession() }}
+            >
+              <span className={css.brandIdentity} aria-hidden="true">
+                <span className={css.brandMark}>
+                  {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
+                </span>
+                <span className={css.brandName}>
+                  {renderSlot('sidebar.brand.name', {}, {
+                    fallback: (
+                      <>
+                        <span className={css.fallbackBrandName}>DSH Local Build</span>
+                        {process.env.DSH_CLIENT_COMMIT_HASH
+                          ? <span className={css.buildRevision}>{process.env.DSH_CLIENT_COMMIT_HASH}</span>
+                          : null}
+                      </>
+                    ),
+                  })}
+                </span>
               </span>
-              <span className={css.brandName}>
-                {renderSlot('sidebar.brand.name', {}, {
-                  fallback: (
-                    <>
-                      <span className={css.fallbackBrandName}>DSH Local Build</span>
-                      {process.env.DSH_CLIENT_COMMIT_HASH
-                        ? <span className={css.buildRevision}>{process.env.DSH_CLIENT_COMMIT_HASH}</span>
-                        : null}
-                    </>
-                  ),
-                })}
-              </span>
-            </span>
-          </button>
-        )}
-        {/* Rail resting state is the whale mark; hovering swaps in the panel
+            </button>
+          )}
+          {/* Rail resting state is the whale mark; hovering swaps in the panel
             icon (the expand affordance, figma sidebar-hover flow). */}
-        <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500}>
-          <button
-            type="button"
-            className={clsx(css.iconButton, css.toggle)}
-            aria-label={collapsed ? t('toggle.open') : t('toggle.collapse')}
-            onClick={() => { toggleSidebar() }}
-          >
-            {!wide && (
-              <span className={css.railMark} aria-hidden="true">
-                {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
-              </span>
-            )}
-            {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
-            <IconPanelLeftOutline16 className={css.panelIcon} size={wide ? 16 : 18} />
-          </button>
-        </Tooltip>
-      </div>
-
-      {/* Expanded, the button carries its own label — tooltip only on the rail. */}
-      <Tooltip label={t('session.new.label')} delayMs={500} disabled={wide}>
-        <button
-          type="button"
-          className={css.newSession}
-          aria-label={t('session.new.label')}
-          onClick={() => { startSession() }}
-        >
-          <IconNewChatOutline16 size={wide ? 14 : 18} />
-          {wide && <span className={clsx(css.newSessionLabel, css.wide)}>{t('session.new')}</span>}
-        </button>
-      </Tooltip>
-
-      {wide && (
-        <nav className={css.workspaceModeNav} aria-label={t('sidebarMode.label')}>
-          <button
-            type="button"
-            className={sidebarMode === 'sessions' ? css.workspaceModeActive : css.workspaceMode}
-            aria-pressed={sidebarMode === 'sessions'}
-            onClick={() => { setSidebarMode('sessions') }}
-          >{t('sidebarMode.sessions')}</button>
-          <button
-            type="button"
-            className={sidebarMode === 'projects' ? css.workspaceModeActive : css.workspaceMode}
-            aria-pressed={sidebarMode === 'projects'}
-            onClick={() => { setSidebarMode('projects') }}
-          >{t('sidebarMode.projects')}</button>
-        </nav>
-      )}
-
-      {/* The browsing region fills the column between the controls and the
-          foot in both states; its rail icon column rides the same slot. */}
-      <div className={css.regionArea}>
-        {renderSlotChain('sidebar.workspaces', {
-          wide,
-          expandSidebar: () => { if (collapsed) toggleSidebar() },
-          sidebarMode,
-          setSidebarMode,
-        })}
-      </div>
-
-      {/* Footer actions stack above Settings in both sidebar widths. */}
-      <div className={css.footArea}>
-        <div className={css.footerActions}>
-          {renderSlot('sidebar.footer.action', { wide })}
+          <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500}>
+            <button
+              type="button"
+              className={clsx(css.iconButton, css.toggle)}
+              aria-label={collapsed ? t('toggle.open') : t('toggle.collapse')}
+              onClick={() => { toggleSidebar() }}
+            >
+              {!wide && (
+                <span className={css.railMark} aria-hidden="true">
+                  {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
+                </span>
+              )}
+              {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
+              <IconPanelLeftOutline16 className={css.panelIcon} size={wide ? 16 : 18} />
+            </button>
+          </Tooltip>
         </div>
-        <div className={css.settingsArea}>
-          {renderSlot('sidebar.settings', { wide })}
+
+        {/* The native action belongs only to the native session browser. */}
+        {sidebarMode === 'sessions' && (
+          <Tooltip label={t('session.new.label')} delayMs={500} disabled={wide}>
+            <button
+              type="button"
+              className={css.newSession}
+              aria-label={t('session.new.label')}
+              onClick={() => { startSession() }}
+            >
+              <IconNewChatOutline16 size={wide ? 14 : 18} />
+              {wide && <span className={clsx(css.newSessionLabel, css.wide)}>{t('session.new')}</span>}
+            </button>
+          </Tooltip>
+        )}
+
+        {/* The browsing region fills the column between the controls and the
+            foot in both states; its rail icon column rides the same slot. */}
+        <div className={css.regionArea}>
+          {renderSlotChain('sidebar.workspaces', {
+            wide,
+            expandSidebar: () => { if (collapsed) toggleSidebar() },
+            sidebarMode,
+            setSidebarMode,
+            reopenDetails: () => {
+              closeDetails()
+              window.setTimeout(() => { openDetails() }, 0)
+            },
+          })}
+        </div>
+
+        {/* Footer actions stack above Settings in both sidebar widths. */}
+        <div className={css.footArea}>
+          <div className={css.footerActions}>
+            {renderSlot('sidebar.footer.action', { wide })}
+          </div>
         </div>
       </div>
     </div>

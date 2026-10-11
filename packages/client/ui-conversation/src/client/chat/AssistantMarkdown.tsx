@@ -31,6 +31,38 @@ export interface AssistantMarkdownProps {
   t: ChatViewSlotProps['t']
 }
 
+type ThinkTextPart =
+  | { kind: 'text'; text: string }
+  | { kind: 'reasoning'; text: string; open: boolean }
+
+/**
+ * Normalize providers that put reasoning in a text block as `<think>` markup.
+ * Structured reasoning blocks are handled separately and remain unchanged.
+ */
+function splitThinkText(text: string): ThinkTextPart[] {
+  const parts: ThinkTextPart[] = []
+  let cursor = 0
+  while (cursor < text.length) {
+    const open = /<think\b[^>]*>/i.exec(text.slice(cursor))
+    if (open === null) {
+      if (cursor < text.length) parts.push({ kind: 'text', text: text.slice(cursor) })
+      break
+    }
+    const openStart = cursor + open.index
+    if (openStart > cursor) parts.push({ kind: 'text', text: text.slice(cursor, openStart) })
+    const contentStart = openStart + open[0].length
+    const close = /<\/think\s*>/i.exec(text.slice(contentStart))
+    if (close === null) {
+      parts.push({ kind: 'reasoning', text: text.slice(contentStart), open: true })
+      break
+    }
+    const closeStart = contentStart + close.index
+    parts.push({ kind: 'reasoning', text: text.slice(contentStart, closeStart), open: false })
+    cursor = closeStart + close[0].length
+  }
+  return parts
+}
+
 /** Reasoning block as the Think variant summary row (figma 39:28304). */
 export const AssistantMarkdown = memo(function AssistantMarkdown({
   blocks, streaming, interrupted, renderMessageImages, mentions, t,
@@ -52,15 +84,28 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
     if (block === undefined) continue
     switch (block.kind) {
       case 'text':
-        rendered.push(
-          <MarkdownText
-            key={i}
-            text={block.text}
-            streaming={streaming}
-            codeLabels={codeLabels}
-            fileMentions={mentions}
-          />,
-        )
+        for (const [partIndex, part] of splitThinkText(block.text).entries()) {
+          if (part.kind === 'reasoning') {
+            rendered.push(
+              <ReasoningRow
+                key={`${i}-think-${partIndex}`}
+                text={part.text}
+                running={streaming && part.open}
+                t={t}
+              />,
+            )
+          } else {
+            rendered.push(
+              <MarkdownText
+                key={`${i}-text-${partIndex}`}
+                text={part.text}
+                streaming={streaming}
+                codeLabels={codeLabels}
+                fileMentions={mentions}
+              />,
+            )
+          }
+        }
         break
       case 'reasoning':
         rendered.push(<ReasoningRow key={i} text={block.text} running={streaming && i === last} t={t} />)

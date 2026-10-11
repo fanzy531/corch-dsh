@@ -36,7 +36,6 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-subagent` | `subagent` | `ctx.tools`, `ctx.subagents`, `ctx.systemPrompt` | `tool/call`, `tool/result`, `child session events through the chosen provider` | `subagent`, `subagent_fork` | The registered tool name is the load-time `toolName` config (default `subagent`); the schema above is that default. The shipped compositions load this package once per subagent backend, so the model additionally sees `subagent_fork` bound to the fork backend. Each instance's description, `run_in_background` parameter, and system-prompt policy follow its own `backgroundMode` and `enableRunInBackground`, so the two shipped schemas are not identical: `subagent` is `continuable` and defaults omitted calls to background with automatic settlement delivery, while `subagent_fork` stays `one-shot` and defaults them to foreground — see `packages/bundle/base/cordis.patch.yml` and `examples/acp-agent/cordis.yml`. |
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`, `list_agents`, `send_message` | `ctx.tools`, `ctx.subagents`, `ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`, `tool/result`, `child session events through ctx.subagents` | - | The globally named control tools over continuable background subagents: provider-bound `tool-subagent` instances register distinct delegation tools, while this package registers `send_message` and `interrupt_agent` once, plus `list_agents` from its separately loaded `/list-agents` plugin (whose catalog rows use the sessionProjections and live Agent registries). |
 | `@deepseek-ai/dsh-tool-subagent-report` | `report` | `ctx.subagents`, `ctx.systemPrompt`, `a live continuable in-process child Agent` | `tool/call`, `tool/result`, `a user-role message in the direct parent session` | - | Registered per continuable in-process child rather than globally, so this schema is visible only inside such a child and survives its global `toolFilter`. The same contribution installs the child-scoped `tool:report` prompt section, which this catalog does not render. The parent-facing `send_message` tool is installed independently. |
-| `@deepseek-ai/dsh-tool-clab-creator` | `clab_creator` | `ctx.tools`, `ctx.systemPrompt`, `a calling Agent for the current session` | `tool/call`, `clab/content in the calling session`, `tool/result` | - | clab_creator appends one log-only Markdown snapshot to the current Conversation; the client workbench renders that event as a keyed Conversation node. |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`, `job_list`, `job_output` | `ctx.tools`, `ctx.jobs`, `ctx.systemPrompt` | `tool/call`, `tool/result`, `user/message via agent.inject() for background completion notices` | - | The kind-agnostic background-job controller: background bash commands, PTY sends, and subagents are read, listed, and killed through the same three tools. Loading the plugin attaches the controller that arms producers' `ctx.jobs.start()`. |
 | `@deepseek-ai/dsh-experimental-tool-agent-team` | `followup_task`, `interrupt_agent`, `list_agents`, `send_message`, `spawn_teammate`, `team_task_create`, `team_task_get`, `team_task_list`, `team_task_update`, `wait_agent` | `ctx.tools`, `ctx.systemPrompt`, `ctx.agentTeams`, `an exact live Team member Agent` | `tool/call`, `team/member`, `team/message/queued`, `team/message/delivered`, `team/task`, `tool/result` | - | All ten tools are scoped to implicit Team Leads and durable teammates. The shipped dsh-base bundle keeps the package disabled; the documented Agent Teams profile patch enables it while disabling the legacy continuable-child control names. |
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`, `owning Agent session` | `tool/call`, `todo/write`, `tool/result` | - | todo_write is session-owned state; UIs render the latest todo/write event as a checklist. `allowParallelInProgress` is required with no default, so the catalog states its choice: `true`, whose description invites several `in_progress` items. A deployment choosing `false` receives the same tool with a description asking for exactly one active task. |
@@ -1635,67 +1634,6 @@ Report selected content to the agent that started you. Call this once before you
 Source: [`packages/subagent/tool-subagent-report/src/index.ts`](../packages/subagent/tool-subagent-report/src/index.ts)
 
 Registered per continuable in-process child rather than globally, so this schema is visible only inside such a child and survives its global `toolFilter`. The same contribution installs the child-scoped `tool:report` prompt section, which this catalog does not render. The parent-facing `send_message` tool is installed independently.
-
-<a id="deepseek-aidsh-tool-clab-creator"></a>
-
-## `@deepseek-ai/dsh-tool-clab-creator`
-
-### `clab_creator`
-
-Save one Markdown snapshot from the current content-creation Conversation. Use this after searching, outlining, drafting, or finalizing content.
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "stage": {
-      "type": "string",
-      "description": "Snapshot stage: outline, draft, or final.",
-      "enum": [
-        "outline",
-        "draft",
-        "final"
-      ]
-    },
-    "title": {
-      "type": "string",
-      "description": "Current project title."
-    },
-    "markdown": {
-      "type": "string",
-      "description": "The complete Markdown snapshot to save."
-    },
-    "platform": {
-      "type": "string",
-      "description": "Target platform: xiaohongshu or wordpress.",
-      "enum": [
-        "xiaohongshu",
-        "wordpress"
-      ]
-    },
-    "status": {
-      "type": "string",
-      "description": "Project status after saving: draft, final, or published.",
-      "enum": [
-        "draft",
-        "final",
-        "published"
-      ]
-    }
-  },
-  "required": [
-    "stage",
-    "title",
-    "markdown",
-    "platform",
-    "status"
-  ]
-}
-```
-
-Source: [`packages/workflow/tool-clab-creator/src/index.ts`](../packages/workflow/tool-clab-creator/src/index.ts)
-
-clab_creator appends one log-only Markdown snapshot to the current Conversation; the client workbench renders that event as a keyed Conversation node.
 
 <a id="deepseek-aidsh-tool-jobs"></a>
 

@@ -239,19 +239,6 @@ Types: [TokenUsage](subsystems/llm-streaming.md)
 
 Source: [`packages/core/session/src/types.ts:277`](../packages/core/session/src/types.ts)
 
-### `clab/*`
-
-<a id="clabcontent--log-only"></a>
-
-#### `clab/content` — log-only
-
-```ts persistence-catalog
-/** One creator content snapshot saved from Conversation; log-only. @mode emit */
-'clab/content': ClabContentEventData
-```
-
-Source: [`packages/workflow/tool-clab-creator/src/types.ts:23`](../packages/workflow/tool-clab-creator/src/types.ts)
-
 ### `command/*`
 
 <a id="commanddone--log-only"></a>

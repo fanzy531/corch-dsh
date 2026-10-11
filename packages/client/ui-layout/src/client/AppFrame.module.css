@@ -29,6 +29,12 @@
   border-right: 1px solid var(--dsw-alias-border-l1);
 }
 
+.appRailCol {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--dsw-specific-sidebar-fill);
+}
+
 .centerCol {
   min-width: 0;
   display: flex;

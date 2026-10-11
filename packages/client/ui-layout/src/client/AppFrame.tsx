@@ -17,10 +17,13 @@ import { computeColumns, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT } from './column
 import type { createLayoutStore } from './stores.ts'
 import css from './AppFrame.module.css'
 
+/** Fixed layout column reserved for the global App Rail. */
+export const APP_RAIL_WIDTH = 72
+
 /** Full composed props: runtime share + child-slot render share + store share. */
 export type AppFrameProps =
   & PropsRuntime<'root'>
-  & PropsRenderSlots<'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
+  & PropsRenderSlots<'appRail' | 'sidebar' | 'conversation' | 'details' | 'shell.overlay'>
   & PropsStore<ReturnType<typeof createLayoutStore>>
 
 /** Center column grid item (session-body building block). */
@@ -162,11 +165,14 @@ export function AppFrame({
     <div
       ref={frameRef}
       className={css.frame}
-      style={{ gridTemplateColumns: `${cols.sidebar}px ${cols.details}px minmax(0, 1fr)` }}
+      style={{ gridTemplateColumns: `${APP_RAIL_WIDTH}px ${cols.sidebar}px ${cols.details}px minmax(0, 1fr)` }}
       data-sidebar-collapsed={sidebarCollapsed || undefined}
       data-details-collapsed={cols.details === 0 || undefined}
       data-dragging={dragging || undefined}
     >
+      <div className={css.appRailCol}>
+        {renderSlot('appRail', { collapsed: sidebarCollapsed, toggleSidebar: actions.toggleSidebar })}
+      </div>
       <div className={css.sidebarCol}>
         {/* Render-site slot call with live concession output: a closed
             sidebar keeps the mounted slot at the compact-rail width, and the
@@ -190,8 +196,8 @@ export function AppFrame({
         {renderSlot('shell.overlay', {})}
       </div>
       {/* The collapsed rail is fixed-width: no resize handle while closed. */}
-      {!sidebarCollapsed && <DragHandle side="sidebar" left={cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
-      {cols.details > 0 && <DragHandle side="details" left={cols.sidebar + cols.details} onStart={onDetailsStart} onDrag={onDetailsDrag} onEnd={onDragEnd} />}
+      {!sidebarCollapsed && <DragHandle side="sidebar" left={APP_RAIL_WIDTH + cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
+      {cols.details > 0 && <DragHandle side="details" left={APP_RAIL_WIDTH + cols.sidebar + cols.details} onStart={onDetailsStart} onDrag={onDetailsDrag} onEnd={onDragEnd} />}
     </div>
   )
 }

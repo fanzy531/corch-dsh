@@ -34,6 +34,7 @@ apps/web/dist/
 .artifacts/
 .dsh-build/
 .dsh/
+.local-dsh/
 .tmp/
 .tmp-node-compat.cjs
 dsh-web*.log

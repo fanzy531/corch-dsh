@@ -1,0 +1,187 @@
+diff --git a/lib/client.js b/lib/client.js
+index 4f339ef28ed7eebd08cf7195b145924ca383b6be..55f91346906939f42ad82a95abd936a35fc3ddbe 100644
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -17928,6 +17928,14 @@ Mode: this is a continuable side conversation. Your answers stay in this side th
+ 		}
+ 		//#endregion
+ 		//#region src/client/conversation-draft.ts
++		function formatFileMentionPath(path) {
++			if (/[\u0000-\u001f\u007f-\u009f"]/.test(path)) return void 0;
++			return /\s/.test(path) ? `@"${path}"` : `@${path}`;
++		}
++		function baseName(path) {
++			const normalized = path.replaceAll("\\", "/");
++			return normalized.slice(normalized.lastIndexOf("/") + 1) || normalized;
++		}
+ 		/**
+ 		* Append `text` to the session's composer draft (space-separated, like the
+ 		* @-mentions). Returns false — and logs — when the conversation service or
+@@ -17948,6 +17956,35 @@ Mode: this is a continuable side conversation. Your answers stay in this side th
+ 				return false;
+ 			}
+ 		}
++		/** Insert one workspace file as a native composer occurrence labelled by its basename. */
++		function appendFileReference(ctx, sessionId, path, cwd) {
++			try {
++				const actx = ctx.sessions.scope(sessionId);
++				if (actx === void 0) return false;
++				const conversation = ctx.get("conversation");
++				if (conversation === void 0) return false;
++				const input = conversation.input.for(actx);
++				const snapshot = input.state.getSnapshot();
++				const relative = relativeTo(cwd ?? "", path);
++				const mention = formatFileMentionPath(relative);
++				if (mention === void 0) return false;
++				const separator = snapshot.draft.trim() === "" ? "" : " ";
++				const label = baseName(relative);
++				const start = snapshot.draft.length + separator.length;
++				input.setDraft(`${snapshot.draft}${separator}@${label}`);
++				const next = input.state.getSnapshot();
++				return input.insertReference({
++					source: "reference",
++					ref: mention,
++					label,
++					appearance: "file",
++					clipboardText: mention
++				}, { start, end: next.draft.length, draftRev: next.draftRev });
++			} catch (error) {
++				console.warn("[dsh-better-sidebar] file reference insert failed:", error);
++				return false;
++			}
++		}
+ 		//#endregion
+ 		//#region src/client/pinned.ts
+ 		const PINNED_META_KEY = "__pinnedHome";
+@@ -20235,7 +20272,7 @@ Mode: this is a continuable side conversation. Your answers stay in this side th
+ 			*/
+ 			const referenceInChat = (0, react.useCallback)((path) => {
+ 				if (sessionId === void 0) return;
+-				appendToDraft(ctx, sessionId, `@${relativeTo(cwd ?? "", path)}`);
++				appendFileReference(ctx, sessionId, path, cwd);
+ 			}, [
+ 				ctx,
+ 				sessionId,
+diff --git a/package.json b/package.json
+index f59585a988749bc6cf2b01bed66a4a61231cd8d4..ab17eda062a1b23f87d9bbf0cf0fb1bf47ce0f22 100644
+--- a/package.json
++++ b/package.json
+@@ -49,6 +49,8 @@
+         "@deepseek-ai/dsh-client-locale",
+         "@deepseek-ai/dsh-client-ui-slots",
+         "@deepseek-ai/dsh-client-ui-conversation",
++        "@deepseek-ai/dsh-client-ui-input-trigger",
++        "@deepseek-ai/dsh-file-reference",
+         "@deepseek-ai/dsh-client-modules"
+       ],
+       "platform": "web"
+@@ -77,6 +79,8 @@
+     "@deepseek-ai/dsh-agent": "^0.1.0-rc.8",
+     "@deepseek-ai/dsh-client-locale": "^0.1.0-rc.8",
+     "@deepseek-ai/dsh-client-ui-conversation": "^0.1.0-rc.8",
++    "@deepseek-ai/dsh-client-ui-input-trigger": "^0.1.0-rc.8",
++    "@deepseek-ai/dsh-file-reference": "^0.1.0-rc.8",
+     "@deepseek-ai/dsh-client-ui-primitives": "^0.1.0-rc.8",
+     "@deepseek-ai/dsh-client-ui-settings": "^0.1.0-rc.8",
+     "@deepseek-ai/dsh-client-ui-slots": "^0.1.0-rc.8",
+@@ -134,6 +138,8 @@
+     "@deepseek-ai/dsh-client-locale": "0.1.1-rc.1",
+     "@deepseek-ai/dsh-client-runtime": "0.1.1-rc.1",
+     "@deepseek-ai/dsh-client-ui-conversation": "0.1.1-rc.1",
++    "@deepseek-ai/dsh-client-ui-input-trigger": "0.1.1-rc.1",
++    "@deepseek-ai/dsh-file-reference": "0.1.1-rc.1",
+     "@deepseek-ai/dsh-client-ui-primitives": "0.1.1-rc.1",
+     "@deepseek-ai/dsh-client-ui-settings": "0.1.1-rc.1",
+     "@deepseek-ai/dsh-client-ui-slots": "0.1.1-rc.1",
+diff --git a/src/client/Sidebar.tsx b/src/client/Sidebar.tsx
+index 8897571263a83c8caa1992059ad99e2bce140b28..79bfac0c5db0ef0f7e42da0c8a802d894709ea70 100644
+--- a/src/client/Sidebar.tsx
++++ b/src/client/Sidebar.tsx
+@@ -33,7 +33,7 @@ import { useSyncExternalStore } from 'react'
+ import clsx from 'clsx'
+ import { IconCloseFill14, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
+ import type { Context, SidebarSessionList } from '../context-types.ts'
+-import { appendToDraft } from './conversation-draft.ts'
++import { appendFileReference } from './conversation-draft.ts'
+ import {
+   BOTTOM_MIN, PANEL_MIN, activateTab, agentUuidOf, allLeaves, closeFloatByTab, closeTab, dockFloat, firstLeaf, floatTab,
+   floatWithTab, isAgentTabId, leafWithTab, migrateBottomTabs,
+@@ -54,7 +54,6 @@ import { computeTitleBarStrip } from './titlebar-strip.ts'
+ import type { NewTabOption } from './TabBar.tsx'
+ import { TAB_DRAG_TYPE, parseDrag, type TabDragPayload } from './TabBar.tsx'
+ import { FreeWindow } from './FreeWindow.tsx'
+-import { relativeTo } from './paths.ts'
+ import { OrphanedTab } from './OrphanedTab.tsx'
+ import { RenderBoundary } from './RenderBoundary.tsx'
+ import { tabContentCompare, type TabContentMemoKey } from './tab-content-memo.ts'
+@@ -1343,7 +1342,7 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
+    */
+   const referenceInChat = useCallback((path: string): void => {
+     if (sessionId === undefined) return
+-    appendToDraft(ctx, sessionId, `@${relativeTo(cwd ?? '', path)}`)
++    appendFileReference(ctx, sessionId, path, cwd)
+   }, [ctx, sessionId, cwd])
+ 
+   if (state === undefined || sessionId === undefined) {
+diff --git a/src/client/conversation-draft.ts b/src/client/conversation-draft.ts
+index 90470547cc89f23a3c8b733e850453328d27d6aa..91f52f25780e620f9b94ed000163700fd43b8d82 100644
+--- a/src/client/conversation-draft.ts
++++ b/src/client/conversation-draft.ts
+@@ -6,6 +6,22 @@
+  * missing service or scope degrades to a logged no-op, never a crash.
+  */
+ import type { Context, SidebarConversation } from '../context-types.ts'
++import type { ReferenceInsert } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
++import { formatFileMention } from '@deepseek-ai/dsh-file-reference/grammar'
++import { relativeTo } from './paths.ts'
++
++interface StructuredSessionInput {
++  state: {
++    getSnapshot(): { draft: string; draftRev: number }
++  }
++  setDraft(text: string): void
++  insertReference(reference: ReferenceInsert, span: { start: number; end: number; draftRev: number }): boolean
++}
++
++function baseName(path: string): string {
++  const normalized = path.replaceAll('\\', '/')
++  return normalized.slice(normalized.lastIndexOf('/') + 1) || normalized
++}
+ 
+ /**
+  * Append `text` to the session's composer draft (space-separated, like the
+@@ -27,3 +43,34 @@ export function appendToDraft(ctx: Context, sessionId: string, text: string): bo
+     return false
+   }
+ }
++
++/** Insert one workspace file as a native composer occurrence labelled by its basename. */
++export function appendFileReference(ctx: Context, sessionId: string, path: string, cwd: string | undefined): boolean {
++  try {
++    const actx = ctx.sessions.scope(sessionId)
++    if (actx === undefined) return false
++    const conversation = ctx.get('conversation') as SidebarConversation | undefined
++    if (conversation === undefined) return false
++    const input = conversation.input.for(actx) as unknown as StructuredSessionInput
++    const snapshot = input.state.getSnapshot()
++    const relative = relativeTo(cwd ?? '', path)
++    const mention = formatFileMention({ path: relative, kind: 'file' }, false)
++    if (mention === undefined) return false
++    const separator = snapshot.draft.trim() === '' ? '' : ' '
++    const label = baseName(relative)
++    const placeholder = `@${label}`
++    const start = snapshot.draft.length + separator.length
++    input.setDraft(`${snapshot.draft}${separator}${placeholder}`)
++    const next = input.state.getSnapshot()
++    return input.insertReference({
++      source: 'reference',
++      ref: mention,
++      label,
++      appearance: 'file',
++      clipboardText: mention,
++    }, { start, end: next.draft.length, draftRev: next.draftRev })
++  } catch (error) {
++    console.warn('[dsh-better-sidebar] file reference insert failed:', error)
++    return false
++  }
++}

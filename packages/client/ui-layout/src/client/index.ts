@@ -33,7 +33,7 @@ declare module '@deepseek-ai/cordis' {
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
     // The 'root' entry itself is the runtime's built-in slot (declared
-    // there); these four are the frame's children, declared by the same
+    // there); these five are the frame's children, declared by the same
     // register() call that contributes AppFrame. Session owners never pass
     // sessionId: the framework injects it as a standard prop.
     /**
@@ -45,6 +45,13 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      *
      * The occupant receives the frame's live column state (collapsed, width)
      * and is expected to render the compact control rail while collapsed.
+     */
+    'appRail': { kind: 'single'; scope: 'root'; owner: AppRailOwnerProps }
+    /**
+     * The full navigation column. ui-sidebar occupies this seat and receives
+     * the frame's column state plus render-slot callbacks; another registration
+     * replaces the navigation column and its nested seats, while no occupant
+     * leaves the left column empty.
      */
     'sidebar': { kind: 'single'; scope: 'root'; owner: SidebarOwnerProps }
     /**
@@ -98,6 +105,14 @@ export interface SidebarOwnerProps {
   width: number
 }
 
+/** Owner share supplied to the layout-level App Rail. */
+export interface AppRailOwnerProps {
+  /** Whether selecting a workbench should reopen the collapsed sidebar. */
+  collapsed: boolean
+  /** Reopen or collapse the adjacent sidebar column. */
+  toggleSidebar: () => void
+}
+
 /** Conversation owner share: business state and actions belong to the registrant. */
 export interface ConvOwnerProps {}
 
@@ -120,6 +135,7 @@ export function apply(ctx: ClientContext): void {
     const disposeRegistration = ctx.slots.register({
       name: 'root',
       children: {
+        'appRail': { kind: 'single', scope: 'root' },
         'sidebar': { kind: 'single', scope: 'root' },
         'conversation': { kind: 'single', scope: 'session-maybe' },
         'details': { kind: 'single', scope: 'session' },

@@ -241,19 +241,6 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 
 来源：[`packages/core/session/src/types.ts:277`](../packages/core/session/src/types.ts)
 
-### `clab/*`
-
-<a id="clabcontent--log-only"></a>
-
-#### `clab/content` — log-only
-
-```ts persistence-catalog
-/** One creator content snapshot saved from Conversation; log-only. @mode emit */
-'clab/content': ClabContentEventData
-```
-
-来源：[`packages/workflow/tool-clab-creator/src/types.ts:23`](../packages/workflow/tool-clab-creator/src/types.ts)
-
 ### `command/*`
 
 <a id="commanddone--log-only"></a>

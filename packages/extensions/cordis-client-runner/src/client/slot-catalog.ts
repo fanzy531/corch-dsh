@@ -80,6 +80,32 @@ export const CLIENT_NOTES: readonly string[] = [
 // detection is told to skip the data rather than the file.
 export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
   {
+    key: 'appRail',
+    kind: 'single',
+    scope: 'root',
+    summary: 'The whole left column.',
+    doc: 'The whole left column. OCCUPIED by ui-sidebar\'s SidebarRoot, which\ndeclares the workspace and settings seats inside it — registering here\nreplaces the navigation column outright rather than adding to it, and\nthe seats it declares disappear with it. To add something to the\nsidebar, register into one of those inner seats instead.\n\nThe occupant receives the frame\'s live column state (collapsed, width)\nand is expected to render the compact control rail while collapsed.',
+    registerOptions: [],
+    ownerProps: [
+      '/** Owner share supplied to the layout-level App Rail. */\nexport interface AppRailOwnerProps {\n  /** Whether selecting a workbench should reopen the collapsed sidebar. */\n  collapsed: boolean\n  /** Reopen or collapse the adjacent sidebar column. */\n  toggleSidebar: () => void\n}',
+    ],
+    ownerPropsReferences: [],
+    standardProps: [
+      'useSessions: SnapshotSelectorHook<SessionListState>',
+      'useWorkspaces: SnapshotSelectorHook<import(\'./workspaces/service.ts\').WorkspaceListState>',
+    ],
+    keyDomain: '',
+    hookContext: '',
+    slotInject: '',
+    declaredBy: 'an entry in \'root\' (client-ui-layout), so it exists while that entry is mounted',
+    occupants: [
+      'client-ui-sidebar AppRail',
+    ],
+    replaceRisk: 'shadows-shipped-ui',
+    example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'appRail\', () => ctx.slots.register(\n      { name: \'appRail\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
+    source: 'packages/client/ui-layout/src/client/index.ts:49',
+  },
+  {
     key: 'conversation',
     kind: 'single',
     scope: 'session-maybe',
@@ -108,7 +134,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation\', () => ctx.slots.register(\n      { name: \'conversation\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:62',
+    source: 'packages/client/ui-layout/src/client/index.ts:69',
   },
   {
     key: 'conversation.chat.assistant-actions',
@@ -232,12 +258,11 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
       'useInput: SnapshotSelectorHook<InputState>',
       'inputActions: InputActions',
     ],
-    keyDomain: 'fixed by the owner\'s key table { [Kind in ChatNodeKind]: { node: ChatNode<Kind> } }, already taken: assistant-step, clab-content, command, command-input, compaction, context, manual-compaction, model-retry, steering, tool-call, turn-error, turn-max-tokens, turn-tail, unknown, user, workflow-run',
+    keyDomain: 'fixed by the owner\'s key table { [Kind in ChatNodeKind]: { node: ChatNode<Kind> } }, already taken: assistant-step, command, command-input, compaction, context, manual-compaction, model-retry, steering, tool-call, turn-error, turn-max-tokens, turn-tail, unknown, user, workflow-run',
     hookContext: 'string',
     slotInject: 'ChatNodeTurnDataInjected',
     declaredBy: 'an entry in \'conversation.view\' (client-ui-conversation), so it exists while that entry is mounted',
     occupants: [
-      'client-ui-clab-creator ContentNodePanel key \'clab-content\'',
       'client-ui-conversation UserMessageNodeView key \'user\'',
       'client-ui-conversation UserMessageNodeView key \'steering\'',
       'client-ui-conversation ContextMessageNodeView key \'context\'',
@@ -452,7 +477,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     slotInject: '',
     declaredBy: 'an entry in \'details\' (client-ui-conversation), so it exists while that entry is mounted',
     occupants: [
-      'client-ui-clab-creator Workbench',
+      '@polus-ai/dsh-client-ui-teaching-reform TeachingReformDetailsRouter',
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.details.context\', () => ctx.slots.register(\n      { name: \'conversation.details.context\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
@@ -704,7 +729,6 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     slotInject: '',
     declaredBy: 'an entry in \'conversation\' (client-ui-conversation), so it exists while that entry is mounted',
     occupants: [
-      'client-ui-clab-creator PendingContextDock id \'clab-context\'',
       'client-ui-conversation QueueDock id \'queue\'',
       'client-ui-conversation TodoDock id \'todo\'',
       'client-ui-goal GoalDock id \'goal\'',
@@ -1232,7 +1256,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'details\', () => ctx.slots.register(\n      { name: \'details\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:72',
+    source: 'packages/client/ui-layout/src/client/index.ts:79',
   },
   {
     key: 'root',
@@ -1647,14 +1671,14 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     occupants: [],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'shell.overlay\', () => ctx.slots.register(\n      { name: \'shell.overlay\', id: \'my-entry\', order: 100, label: \'My entry\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:83',
+    source: 'packages/client/ui-layout/src/client/index.ts:90',
   },
   {
     key: 'sidebar',
     kind: 'single',
     scope: 'root',
-    summary: 'The whole left column.',
-    doc: 'The whole left column. OCCUPIED by ui-sidebar\'s SidebarRoot, which\ndeclares the workspace and settings seats inside it — registering here\nreplaces the navigation column outright rather than adding to it, and\nthe seats it declares disappear with it. To add something to the\nsidebar, register into one of those inner seats instead.\n\nThe occupant receives the frame\'s live column state (collapsed, width)\nand is expected to render the compact control rail while collapsed.',
+    summary: 'The full navigation column.',
+    doc: 'The full navigation column. ui-sidebar occupies this seat and receives\nthe frame\'s column state plus render-slot callbacks; another registration\nreplaces the navigation column and its nested seats, while no occupant\nleaves the left column empty.',
     registerOptions: [],
     ownerProps: [
       '/** Sidebar owner share: live column state from the frame\'s concession solve. */\nexport interface SidebarOwnerProps {\n  /** True when the sidebar is closed (the column renders the compact control rail). */\n  collapsed: boolean\n  /** Rendered column width in px (SIDEBAR_COLLAPSED when collapsed). */\n  width: number\n}',
@@ -1673,7 +1697,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'sidebar\', () => ctx.slots.register(\n      { name: \'sidebar\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-layout/src/client/index.ts:49',
+    source: 'packages/client/ui-layout/src/client/index.ts:56',
   },
   {
     key: 'sidebar.brand.mark',
@@ -1700,7 +1724,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'sidebar.brand.mark\', () => ctx.slots.register(\n      { name: \'sidebar.brand.mark\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:23',
+    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:22',
   },
   {
     key: 'sidebar.brand.name',
@@ -1727,7 +1751,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'sidebar.brand.name\', () => ctx.slots.register(\n      { name: \'sidebar.brand.name\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:28',
+    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:27',
   },
   {
     key: 'sidebar.footer.action',
@@ -1772,14 +1796,14 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'sidebar.footer.action\', () => ctx.slots.register(\n      { name: \'sidebar.footer.action\', id: \'my-entry\', order: 100, label: \'My entry\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:46',
+    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:44',
   },
   {
     key: 'sidebar.settings',
     kind: 'single',
     scope: 'root',
-    summary: 'The settings seat at the sidebar foot.',
-    doc: 'The settings seat at the sidebar foot. Declared by this package\'s\n\'sidebar\' entry; ui-settings registers its trigger row + modal panel.\nThe sidebar passes only its column state — it holds no settings state.',
+    summary: 'The global settings seat rendered in App Rail.',
+    doc: 'The global settings seat rendered in App Rail. Declared by this package\'s\nlayout-level navigation entry; ui-settings registers its trigger + modal.',
     registerOptions: [],
     ownerProps: [
       '/**\n * Owner share of the sidebar settings seat: the column display state the\n * occupant\'s trigger row must render against (wide row vs rail icon).\n */\nexport interface SidebarSettingsOwnerProps {\n  /** Whether the sidebar renders wide content (false = 56px rail). */\n  wide: boolean\n}',
@@ -1792,13 +1816,13 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     keyDomain: '',
     hookContext: '',
     slotInject: '',
-    declaredBy: 'an entry in \'sidebar\' (client-ui-sidebar), so it exists while that entry is mounted',
+    declaredBy: 'an entry in \'appRail\' (client-ui-sidebar), so it exists while that entry is mounted',
     occupants: [
       'client-ui-settings-general SettingsRoot',
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'sidebar.settings\', () => ctx.slots.register(\n      { name: \'sidebar.settings\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:41',
+    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:39',
   },
   {
     key: 'sidebar.workspaces',
@@ -1815,11 +1839,9 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
       },
     ],
     ownerProps: [
-      '/**\n * Owner share of the browser hole — the only facts crossing the shell/region\n * boundary. Business data and actions arrive through the region\'s own inject.\n */\nexport interface SidebarSectionOwnerProps {\n  /** Shell fold-state output: wide renders the full browser, rail the icon column. */\n  wide: boolean\n  /** Rail icons request expansion; the browser rides the wide flip for focus. */\n  expandSidebar: () => void\n  /** Which browser occupies the shared sidebar region. */\n  sidebarMode: SidebarMode\n  /** Select the browser that occupies the shared sidebar region. */\n  setSidebarMode: (mode: SidebarMode) => void\n}',
+      '/**\n * Owner share of the browser hole — the only facts crossing the shell/region\n * boundary. Business data and actions arrive through the region\'s own inject.\n */\nexport interface SidebarSectionOwnerProps {\n  /** Shell fold-state output: wide renders the full browser, rail the icon column. */\n  wide: boolean\n  /** Rail icons request expansion; the browser rides the wide flip for focus. */\n  expandSidebar: () => void\n  /** Which browser occupies the shared sidebar region. */\n  sidebarMode: SidebarMode\n  /** Select the browser that occupies the shared sidebar region. */\n  setSidebarMode: (mode: SidebarMode) => void\n  /** Reset a closed details track before opening it again. */\n  reopenDetails: () => void\n}',
     ],
-    ownerPropsReferences: [
-      'SidebarMode',
-    ],
+    ownerPropsReferences: [],
     standardProps: [
       'useSessions: SnapshotSelectorHook<SessionListState>',
       'useWorkspaces: SnapshotSelectorHook<import(\'./workspaces/service.ts\').WorkspaceListState>',
@@ -1829,12 +1851,13 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     slotInject: '',
     declaredBy: 'an entry in \'sidebar\' (client-ui-sidebar), so it exists while that entry is mounted',
     occupants: [
-      'client-ui-clab-creator ProjectList',
+      '@polus-ai/dsh-client-ui-teaching-reform CurriculumSidebar',
+      '@polus-ai/dsh-client-ui-teaching-reform InterviewSidebar',
       'client-ui-workspace WorkspaceBrowser',
     ],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'sidebar.workspaces\', () => ctx.slots.register(\n      { name: \'sidebar.workspaces\', select: owner => null },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:35',
+    source: 'packages/client/ui-sidebar/src/client/contract/slots.ts:34',
   },
   {
     key: 'sidebar.workspaces.directoryFlow',

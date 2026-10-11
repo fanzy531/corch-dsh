@@ -50,6 +50,35 @@ describe('tails', () => {
     expect(stopped.getByText('已停止')).toBeTruthy()
   })
 
+  it('converts text-wrapped think markup into a collapsible reasoning row', () => {
+    const view = render(
+      <AssistantMarkdown
+        t={t}
+        blocks={[{ kind: 'text', text: '<think>internal plan</think>你好！有什么我可以帮你的吗？' }]}
+        streaming={false}
+        renderMessageImages={renderMessageImages}
+      />,
+    )
+    expect(view.getByText('Think')).toBeTruthy()
+    expect(view.getByText('internal plan')).toBeTruthy()
+    expect(view.getByText('你好！有什么我可以帮你的吗？')).toBeTruthy()
+    expect(view.container.textContent).not.toContain('<think>')
+    expect(view.container.textContent).not.toContain('</think>')
+  })
+
+  it('keeps an unclosed streamed think block in the running state', () => {
+    const view = render(
+      <AssistantMarkdown
+        t={t}
+        blocks={[{ kind: 'text', text: '<think>still thinking' }]}
+        streaming
+        renderMessageImages={renderMessageImages}
+      />,
+    )
+    expect(view.container.querySelector('[data-variant="think"][data-state="running"]')).not.toBeNull()
+    expect(view.container.textContent).not.toContain('<think>')
+  })
+
   it('AssistantMarkdown skips the root shell when only tool-call heads remain', () => {
     // Tool heads are drawn by ChatView's tool groups; an empty root between
     // groups is layout noise (no text, no pulse, no interrupted marker).

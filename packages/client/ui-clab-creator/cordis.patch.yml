@@ -1,6 +1,0 @@
-# Install the creator tool and its browser workbench as one optional layer.
-- insert:
-    - id: tool-clab-creator
-      name: '@deepseek-ai/dsh-tool-clab-creator'
-    - id: ui-clab-creator
-      name: '@deepseek-ai/dsh-client-ui-clab-creator'

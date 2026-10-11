@@ -1,0 +1,141 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>实践专家访谈工作台</title>
+<style>
+:root{--bg:#f9f8f6;--card:#fff;--text:#1c1f23;--muted:#6b7280;--border:#e5e7eb;--accent:#d9534f;--hover:#c9302c;--success:#2e7d32;--success-bg:#e8f5e9;--amber:#fff7e6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 Inter,"PingFang SC","Microsoft YaHei",sans-serif}button,textarea,input{font:inherit}button{cursor:pointer}.app{min-height:100vh;display:flex;flex-direction:column}.topbar{height:64px;background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 4px #0000000a;display:flex;align-items:center}.topbar-inner,.main,.footer-inner{width:min(1240px,calc(100% - 32px));margin:auto}.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{font-weight:600;font-size:18px;letter-spacing:-.02em;white-space:nowrap}.id{font-size:11px;color:var(--muted);background:#f3f4f6;border:1px solid var(--border);border-radius:999px;padding:4px 10px;margin-left:10px}.expert-meta{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}.expert-meta strong{color:var(--text)}.role{font-size:11px;color:#8a5a00;background:var(--amber);border:1px solid #f2d69e;border-radius:4px;padding:3px 7px}.saved{font-size:11px;color:var(--success);background:var(--success-bg);border:1px solid #b9dfbd;border-radius:5px;padding:4px 8px}
+.main{flex:1;padding:24px 0 30px}.intro{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 4px #00000008;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.intro h1{font-size:20px;font-weight:500;margin:0 0 3px}.intro p{margin:0;color:var(--muted);font-size:12px}.intro-count{text-align:right;color:var(--muted);font-size:11px}.intro-count strong{display:block;color:var(--accent);font-size:19px}.layout{display:grid;grid-template-columns:240px minmax(0,1fr) 240px;gap:20px}.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 4px #00000008}.outline{padding:12px;max-height:720px;overflow:auto}.group{margin-bottom:18px}.group-title{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;padding:0 10px 5px}.step{width:100%;border:0;border-left:4px solid transparent;border-radius:6px;background:transparent;text-align:left;color:#4b5563;font-size:12px;padding:8px 9px;display:flex;justify-content:space-between;gap:8px}.step:hover{background:#fafafa}.step.active{background:#d9534f12;border-left-color:var(--accent);color:var(--accent);font-weight:600}.step.done{color:var(--success)}.check{font-weight:700}.question-card{min-height:590px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}.stage-row{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;margin-bottom:7px}.bar{height:6px;background:#f0f1f3;border-radius:99px;overflow:hidden;margin-bottom:24px}.bar i{display:block;height:100%;background:var(--accent);transition:width .25s}.question-head h2{font-size:19px;line-height:1.4;margin:0 0 5px}.question-head p{font-size:12px;color:var(--muted);margin:0}.question-body{margin-top:22px}.option-list{display:grid;gap:9px;margin-bottom:18px}.option{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;color:#30343a}.option:hover{background:#fafafa}.option input{margin-top:4px;accent-color:var(--accent)}.label{display:block;font-size:12px;font-weight:600;margin:14px 0 6px}.answer{width:100%;min-height:145px;border:1px solid var(--border);border-radius:8px;padding:11px;resize:vertical;outline:0;font-size:13px}.answer:focus{border-color:var(--accent);box-shadow:0 0 0 2px #d9534f1f}.helper{font-size:11px;color:var(--muted);background:#fafafa;border:1px solid #f0f0f0;border-radius:7px;padding:10px;margin-top:14px}.controls{border-top:1px solid var(--border);margin-top:22px;padding-top:16px}.voice-row,.action-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.voice-row{margin-bottom:14px}.voice{border:0;background:transparent;color:var(--muted);font-size:12px;padding:3px}.voice:hover,.voice.active{color:var(--accent)}.voice-status{font-size:11px;color:var(--accent)}.actions{display:flex;gap:10px}.btn{border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);font-size:12px;padding:9px 14px}.btn:hover{background:#fafafa}.btn.primary{border-color:var(--accent);background:var(--accent);color:#fff}.btn.primary:hover{background:var(--hover)}.btn:disabled{opacity:.4;cursor:not-allowed}.tips{display:grid;gap:14px}.tip{padding:15px}.tip h3{font-size:12px;margin:0 0 7px}.tip p{font-size:12px;color:var(--muted);margin:0}.summary{background:#fafafa;border:1px solid var(--border);border-radius:8px;padding:13px;font-size:12px;max-height:240px;overflow:auto}.summary h4{font-size:12px;margin:0 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px}.summary-item{margin:9px 0}.summary-item b{color:var(--accent);font-size:11px}.summary-item p{margin:3px 0;color:#4b5563}.footer{background:#fff;border-top:1px solid var(--border);padding:11px 0;margin-top:auto}.footer-inner{text-align:center;color:var(--muted);font-size:11px}.success{margin:70px auto;padding:28px;text-align:center;width:min(470px,100%)}.success-icon{width:48px;height:48px;border-radius:50%;background:var(--success-bg);color:var(--success);display:grid;place-items:center;margin:0 auto 12px;font-size:25px}.success h2{font-size:18px;margin:0 0 7px}.success p{color:var(--muted);font-size:12px;margin:0 0 18px}.success .btn{width:100%}@media(max-width:980px){.layout{grid-template-columns:190px minmax(0,1fr)}.tips{display:none}}@media(max-width:680px){.topbar{height:auto;padding:14px 0}.topbar-inner{align-items:flex-start}.expert-meta{display:none}.main{width:min(100% - 20px,600px);padding-top:14px}.intro{align-items:flex-start;padding:15px}.intro h1{font-size:17px}.layout{display:block}.outline{display:none}.question-card{padding:18px;min-height:600px}.footer{margin-top:16px}.id{display:none}}
+</style><style>.auth-card{margin:70px auto;padding:30px;width:min(440px,100%);text-align:left}.auth-card h2{margin:0 0 8px;font-size:20px}.auth-card p{margin:0 0 18px;color:var(--muted);font-size:13px}.auth-card label{display:block;margin-bottom:7px;font-size:13px;font-weight:600}.auth-card input{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:8px;letter-spacing:.22em;font-size:20px;outline:0}.auth-card input:focus{border-color:var(--accent);box-shadow:0 0 0 2px #d9534f1f}.auth-card .btn{width:100%;margin-top:14px}.auth-error{margin-top:10px;color:var(--accent);font-size:12px}</style></head><body><div class="app" id="app"></div>
+<script>
+(() => {
+  const publicFieldnoteId = new URLSearchParams(location.search).get('fieldnoteId') || 'FN-DRAFT'
+  const storeKey = `practice-expert-interview:${publicFieldnoteId}`
+  const demoPack = {
+    fieldnoteId: 'FN-DRAFT',
+    profile: { name: '实践专家', industry: '教学改革', role: '实践专家', years: '15年' },
+    questions: [
+      { id: 'Q01', title: '经历校准', type: '开放回忆', question: '请介绍目前的主要工作，以及最能代表您独立判断的一次职业转折。', helper: '可以先自由描述，再参考提示补充。', followUp: '如果方便，请说明当时面临的约束和您承担的责任。' },
+      { id: 'Q02', title: '关键转折', type: '开放回忆', question: '回顾您的职业经历，哪一次转折最改变了您的工作方法？为什么？', helper: '可从人物、任务、环境或工具变化谈起。' },
+      { id: 'Q03', title: '核心职责', type: '开放回忆', question: '您目前最核心的三项职责是什么？每项职责通常如何判断是否做好？', helper: '请尽量使用真实工作中的判断标准。' },
+      { id: 'Q04', title: '边界识别', type: '开放回忆', question: '哪些事情属于您的职责边界，哪些事情通常需要协同或交接？', helper: '可以举一个边界模糊或发生变化的例子。' },
+      { id: 'Q05', title: '任务选择', type: '单项选择', question: '当多项任务同时出现时，您通常优先依据什么排序？', options: ['影响范围', '紧急程度', '资源与能力匹配', '长期价值', '客户或组织要求', '其他'], helper: '可多选后补充一个实际例子。' },
+      { id: 'Q06', title: '任务定义', type: '开放回忆', question: '请讲一次您需要把模糊要求转化为明确任务的经历。您做了哪些判断？', helper: '重点描述从模糊到清晰的过程。' },
+      { id: 'Q07', title: '工作步骤', type: '开放回忆', question: '完成一项典型任务时，您通常如何安排步骤、节奏和检查点？', helper: '可以按照时间顺序描述。' },
+      { id: 'Q08', title: '关键判断', type: '开放回忆', question: '在您的工作中，最需要依靠经验而不能完全照搬流程的判断是什么？', helper: '请说明判断依据和可能的风险。' },
+      { id: 'Q09', title: '工具与资源', type: '多项选择', question: '完成工作时，您通常会使用哪些工具、资料、平台或资源？', options: ['计划表或清单', '数据与分析工具', '行业标准或规范', '协作平台', '案例资料库', '专家网络', '其他'], helper: '请选择后说明哪些真正提高了质量。' },
+      { id: 'Q10', title: '协作方式', type: '开放回忆', question: '您通常如何与同事、客户或其他部门协作？什么情况下需要升级沟通？', helper: '请描述一次协作顺利或困难的经历。' },
+      { id: 'Q11', title: '质量标准', type: '开放回忆', question: '您如何判断一项工作达到合格、优秀或需要返工？', helper: '可分别说出可观察的结果或证据。' },
+      { id: 'Q12', title: '真实案例', type: '案例开放题', question: '请完整讲述一个您亲自负责的真实案例：背景、任务、行动、结果和复盘。', helper: '不需要使用专业术语，按实际发生顺序描述即可。', followUp: '如果结果不理想，您会怎样处理？' },
+      { id: 'Q13', title: '高难度情境', type: '开放回忆', question: '请讲一次最复杂或压力最大的任务。当时最难的地方是什么？', helper: '重点描述您如何识别问题并做出取舍。' },
+      { id: 'Q14', title: '例外处理', type: '开放回忆', question: '请讲一次标准流程无法覆盖的例外情况。您采取了什么办法？', helper: '说明哪些经验可以迁移，哪些只能现场判断。' },
+      { id: 'Q15', title: '失败与修正', type: '开放回忆', question: '请分享一次没有达到预期的经历，以及后来如何修正。', helper: '这里没有标准答案，重点是复盘过程。' },
+      { id: 'Q16', title: '经验沉淀', type: '开放回忆', question: '您会如何把个人经验沉淀成团队可以使用的方法、工具或标准？', helper: '可以谈文档、培训、模板、示范或制度。' },
+      { id: 'Q17', title: '新人带教', type: '开放回忆', question: '如果要带一位新人入门，您会先教什么？哪些内容需要在真实任务中练习？', helper: '请区分知识、技能和判断。' },
+      { id: 'Q18', title: '迁移边界', type: '开放回忆', question: '哪些经验可以迁移到其他组织或场景？哪些经验不能直接照搬？', helper: '请说明成立条件和失效边界。' },
+      { id: 'Q19', title: '未来变化', type: '开放回忆', question: '未来三年，您认为这个岗位最重要的变化会是什么？从业者应如何准备？', helper: '可以从技术、客户、组织或行业变化谈起。' },
+      { id: 'Q20', title: '回看确认', type: '专家确认', question: '回看本次访谈，哪些内容最能代表您的真实经验？还有哪些内容需要补充、修改或匿名处理？', helper: '提交前您可以随时修改答案。' },
+    ],
+  }
+  let data = null
+  let loadError = ''
+  let authenticated = false
+  let accessError = ''
+  const accessKey = `practice-expert-interview-access:${publicFieldnoteId}`
+  const publicDataUrl = `/interviews/${encodeURIComponent(publicFieldnoteId)}.json`
+  async function loadPublishedPack() {
+    if (publicFieldnoteId === 'FN-DRAFT') { data = demoPack; return }
+    // A public SPA must never use another interview's localStorage entry as a
+    // fallback. That made a missing publication look like a valid but wrong
+    // interview. localStorage is retained only for answers after the pack is
+    // loaded, while the question pack itself comes from the public object.
+    try {
+      const response = await fetch(publicDataUrl, { cache: 'no-store' })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const saved = await response.json()
+      if (!saved?.fieldnoteId || !Array.isArray(saved.questions) || saved.questions.length === 0) throw new Error('问题包为空或格式无效')
+      data = saved
+    } catch (error) {
+      // Keep a same-origin local draft usable for the host's preview, but do
+      // not silently show the built-in sample pack for a public interview.
+      try {
+        const saved = JSON.parse(localStorage.getItem(storeKey) || 'null')
+        if (saved?.fieldnoteId && Array.isArray(saved.questions) && saved.questions.length) data = saved
+      } catch {}
+      if (!data) loadError = `暂时无法读取已发布的问题包（${error instanceof Error ? error.message : '网络错误'}）`
+    }
+  }
+  const fieldnoteId = publicFieldnoteId
+  let index = 0
+  let submitted = false
+  let recognition = null
+  const answers = {}
+  const setup = () => {
+    if (!data) return
+    document.title = `实践专家访谈 · ${data.fieldnoteId || fieldnoteId}`
+    data.questions.forEach(q => { answers[q.id] ||= { text: '', selected: '', options: [] } })
+  }
+  const groups = ['阶段 1：经历确认', '阶段 2：核心职责', '阶段 3：真实案例', '阶段 4：回看确认']
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+  const stage = i => i < 2 ? 0 : i < 5 ? 1 : i < data.questions.length - 1 ? 2 : 3
+  const persist = () => localStorage.setItem(storeKey, JSON.stringify({ ...data, answers }))
+  const hasInvitation = () => typeof data?.invitation?.code === 'string' && /^\d{6}$/.test(data.invitation.code)
+  const restoreAccess = () => {
+    if (!hasInvitation()) { authenticated = true; return }
+    try {
+      const saved = JSON.parse(localStorage.getItem(accessKey) || 'null')
+      authenticated = typeof saved?.expiresAt === 'number' && saved.expiresAt > Date.now()
+    } catch { authenticated = false }
+  }
+  const activate = (value) => {
+    if (!hasInvitation()) { authenticated = true; return }
+    if (value !== data.invitation.code) { accessError = '口令不正确，请向主持人确认后重试。'; render(); return }
+    const activatedAt = Date.now(); const expiresAt = activatedAt + 72 * 60 * 60 * 1000
+    localStorage.setItem(accessKey, JSON.stringify({ activatedAt, expiresAt }))
+    authenticated = true; accessError = ''; render()
+  }
+
+  function render() {
+    if (!data) {
+      app.innerHTML = `<header class="topbar"><div class="topbar-inner"><span class="brand">实践专家访谈工作台</span><span class="id">Fieldnote ID: ${esc(publicFieldnoteId)}</span></div></header><main class="main"><div class="panel success"><div class="success-icon">!</div><h2>问题包暂时不可用</h2><p>${esc(loadError || '尚未发布该访谈的问题包。请联系主持人重新发布。')}</p><button class="btn primary" id="retry">重新加载</button></div></main><footer class="footer"><div class="footer-inner">Fieldnote Expert Interview System © 2026</div></footer>`
+      document.querySelector('#retry').onclick = async () => { loadError = ''; await loadPublishedPack(); setup(); render() }
+      return
+    }
+    if (!authenticated) {
+      app.innerHTML = `<header class="topbar"><div class="topbar-inner"><span class="brand">实践专家访谈工作台</span><span class="id">Fieldnote ID: ${esc(publicFieldnoteId)}</span></div></header><main class="main"><div class="panel auth-card"><h2>请输入访谈口令</h2><p>这是一次受邀的实践专家访谈。请输入主持人提供的6位数字口令，激活后本次SPA可使用72小时。</p><label for="invite-code">6位数字口令</label><input id="invite-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="例如 482731"><button class="btn primary" id="activate">验证并开始</button>${accessError ? `<div class="auth-error" role="alert">${esc(accessError)}</div>` : ''}</div></main><footer class="footer"><div class="footer-inner">Fieldnote Expert Interview System © 2026</div></footer>`
+      const input = document.querySelector('#invite-code'); input.oninput = () => { input.value = input.value.replace(/\D/g, '').slice(0, 6) }; document.querySelector('#activate').onclick = () => activate(input.value)
+      return
+    }
+    if (submitted) {
+      app.innerHTML = `<header class="topbar"><div class="topbar-inner"><span class="brand">实践专家访谈工作台</span><span class="saved">✓ 已提交</span></div></header><main class="main"><div class="panel success"><div class="success-icon">✓</div><h2>${esc(data.profile?.name || '专家')}，访谈已成功提交</h2><p>感谢您的配合。系统已保存核心职责、真实案例、关键决策逻辑与经验迁移边界。</p><button class="btn primary" id="close">关闭并返回首页</button></div></main><footer class="footer"><div class="footer-inner">Fieldnote Expert Interview System © 2026</div></footer>`
+      document.querySelector('#close').onclick = () => { submitted = false; index = 0; render() }
+      return
+    }
+    const q = data.questions[index]; const answer = answers[q.id]; const percent = Math.round((index + 1) / data.questions.length * 100)
+    const groupsHtml = groups.map((title, gi) => {
+      const start = gi === 0 ? 0 : gi === 1 ? 2 : gi === 2 ? 5 : data.questions.length - 1
+      const end = gi === 0 ? 2 : gi === 1 ? 5 : gi === 2 ? data.questions.length - 1 : data.questions.length
+      return `<div class="group"><div class="group-title">${title}</div>${data.questions.slice(start, end).map(item => { const n = data.questions.indexOf(item); const a = answers[item.id]; const done = a.text || a.selected || a.options.length; return `<button class="step ${n === index ? 'active' : ''} ${done ? 'done' : ''}" data-go="${n}"><span>${esc(item.title || item.id)}</span><span class="check">${done ? '✓' : ''}</span></button>` }).join('')}</div>`
+    }).join('')
+    const options = Array.isArray(q.options) ? q.options : []
+    const radio = q.type === '单项选择' || q.type === '授权确认'
+    app.innerHTML = `<header class="topbar"><div class="topbar-inner"><div><span class="brand">实践专家访谈工作台</span><span class="id">Fieldnote ID: FN-${Date.now().toString().slice(-8)}</span></div><div class="expert-meta"><span>受访专家：</span><strong>${esc(data.profile?.name || '待确认')}</strong><span class="role">${esc(data.profile?.role || data.profile?.industry || '实践专家')} / ${esc(data.profile?.years || '')}</span><span class="saved">✓ 草稿已实时暂存</span></div></div></header><main class="main"><div class="intro"><div><h1>请从您熟悉的地方，慢慢讲起。</h1><p>这不是考试，也没有标准答案。您可以用文字或语音回答，提交前始终可以修改。</p></div><div class="intro-count">全套节点进度<strong>${index + 1} / ${data.questions.length}</strong></div></div><div class="layout"><aside class="panel outline">${groupsHtml}</aside><section class="panel question-card"><div><div class="stage-row"><span>阶段：<strong>${groups[stage(index)]}</strong></span><span>${percent}%</span></div><div class="bar"><i style="width:${percent}%"></i></div><div class="question-head"><h2>${esc(q.id || `Q${index + 1}`)} · ${esc(q.title || '问题')}</h2><p>${esc(q.question)}</p></div><div class="question-body">${options.length ? `<div class="option-list">${options.map((option, i) => `<label class="option"><input type="${radio ? 'radio' : 'checkbox'}" name="answer-options" data-option="${i}" ${answer.options.includes(i) || answer.selected === option ? 'checked' : ''}><span>${esc(option)}</span></label>`).join('')}</div>` : ''}${q.helper ? `<div class="helper">辅助提示：${esc(q.helper)}</div>` : ''}<label class="label">${radio ? '补充说明（可选）：' : '您的回答或案例描述：'}</label><textarea id="answer" class="answer" placeholder="请根据您的实际经验详细描述……">${esc(answer.text)}</textarea></div></div><div class="controls"><div class="voice-row"><button class="voice" id="voice">♩ 按住或点击开启语音转写</button><span class="voice-status" id="voice-status"></span></div><div class="action-row"><button class="btn" id="prev" ${index === 0 ? 'disabled' : ''}>上一步</button><div class="actions"><button class="btn" id="save">暂存退出</button><button class="btn primary" id="next">${index === data.questions.length - 1 ? '确认并提交最终访谈' : '保存并继续'}</button></div></div></div></section><aside class="tips"><div class="panel tip"><h3>ⓘ 主持人即时提示</h3><p>${esc(q.followUp || '请根据您的真实从业经验作答，无标准答案。')}</p></div><div class="panel tip"><h3>旅途记录卡</h3><p>不需要一次说完。您的回答已开启本地自动保存，可随时中断并在下次访问时恢复。</p></div><div class="panel tip"><h3>当前回答摘要</h3><div class="summary"><h4>访谈原话与已录入内容</h4><div class="summary-item"><b>${esc(q.title || q.id)}</b><p>${esc(answer.text || '未填写')}</p></div></div></div></aside></div></main><footer class="footer"><div class="footer-inner">Fieldnote Expert Interview System © 2026 · 专家访谈工作台</div></footer>`
+    const idBadge = document.querySelector('.id'); if (idBadge) idBadge.textContent = `Fieldnote ID: ${fieldnoteId}${data.questionPackMeta?.version ? ` · 问题包 v${data.questionPackMeta.version}` : ''}`
+    document.querySelectorAll('[data-go]').forEach(button => { button.onclick = () => { index = Number(button.dataset.go); render() } })
+    const textarea = document.querySelector('#answer'); textarea.oninput = () => { answer.text = textarea.value; persist() }
+    document.querySelectorAll('[data-option]').forEach(input => { input.onchange = () => { if (radio) { answer.selected = options[Number(input.dataset.option)] || ''; answer.options = [] } else answer.options = [...document.querySelectorAll('[data-option]:checked')].map(x => Number(x.dataset.option)); persist() } })
+    document.querySelector('#prev').onclick = () => { if (index > 0) { index--; render() } }
+    document.querySelector('#save').onclick = () => { persist(); document.querySelector('#save').textContent = '已暂存' }
+    document.querySelector('#next').onclick = () => { if (index < data.questions.length - 1) { index++; render() } else { submitted = true; persist(); render() } }
+    document.querySelector('#voice').onclick = () => startVoice(textarea)
+  }
+  function startVoice(textarea) {
+    const status = document.querySelector('#voice-status')
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) { status.textContent = '当前浏览器不支持语音识别'; return }
+    if (recognition) { recognition.stop(); return }
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    recognition = new Recognition(); recognition.lang = 'zh-CN'; recognition.interimResults = true
+    recognition.onstart = () => { status.textContent = '正在听，请自然表达…'; document.querySelector('#voice').classList.add('active') }
+    recognition.onresult = event => { let text = ''; for (const result of event.results) text += result[0].transcript; textarea.value = answers[data.questions[index].id].text + text; answers[data.questions[index].id].text = textarea.value }
+    recognition.onend = () => { recognition = null; status.textContent = '语音已填入，可继续修改'; document.querySelector('#voice')?.classList.remove('active') }
+    recognition.start()
+  }
+  loadPublishedPack().then(() => { setup(); restoreAccess(); render() })
+})()
+</script></body></html>

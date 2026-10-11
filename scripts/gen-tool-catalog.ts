@@ -46,7 +46,6 @@ import * as ToolBashPersistent from '@deepseek-ai/dsh-tool-bash-persistent'
 import * as ToolPwshPersistent from '@deepseek-ai/dsh-tool-pwsh-persistent'
 import CordisHostRunner from '@deepseek-ai/dsh-cordis-host-runner'
 import * as ToolCordis from '@deepseek-ai/dsh-tool-cordis'
-import * as ToolClabCreator from '@deepseek-ai/dsh-tool-clab-creator'
 import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
 import * as ToolFsSearch from '@deepseek-ai/dsh-tool-fs-search'
 import * as ToolStrReplaceEditor from '@deepseek-ai/dsh-tool-str-replace-editor'
@@ -510,18 +509,6 @@ const TOOL_PACKAGES: ToolPackage[] = [
       + 'inside such a child and survives its global `toolFilter`. The same contribution installs the '
       + 'child-scoped `tool:report` prompt section, which this catalog does not render. The parent-facing '
       + '`send_message` tool is installed independently.',
-  },
-  {
-    pkg: '@deepseek-ai/dsh-tool-clab-creator',
-    dir: 'tool-clab-creator',
-    source: 'packages/workflow/tool-clab-creator/src/index.ts',
-    requires: ['ctx.tools', 'ctx.systemPrompt', 'a calling Agent for the current session'],
-    writes: ['tool/call', 'clab/content in the calling session', 'tool/result'],
-    async mount(ctx) {
-      await ctx.plugin(ToolClabCreator)
-    },
-    note:
-      'clab_creator appends one log-only Markdown snapshot to the current Conversation; the client workbench renders that event as a keyed Conversation node.',
   },
   {
     pkg: '@deepseek-ai/dsh-tool-jobs',

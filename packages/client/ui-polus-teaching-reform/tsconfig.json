@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.client.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "lib/types", "types": ["node"] },
+  "include": ["src"],
+  "references": [
+    { "path": "../../client/runtime" },
+    { "path": "../../client/ui-conversation" },
+    { "path": "../../client/ui-layout" },
+    { "path": "../../client/ui-sidebar" },
+    { "path": "../../client/ui-slots" },
+    { "path": "../../client/ui-primitives" },
+    { "path": "../../core/tools" },
+    { "path": "../../core/session" },
+    { "path": "../../core/system-prompt" },
+    { "path": "../../runtime-diagnostics/invariants" }
+  ]
+}

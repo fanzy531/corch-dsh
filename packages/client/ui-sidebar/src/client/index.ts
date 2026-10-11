@@ -3,6 +3,7 @@ import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { SidebarRootInjected } from './contract/slots.ts'
+import { AppRail } from './AppRail.tsx'
 import { SidebarRoot } from './SidebarRoot.tsx'
 import { en, zh, type SidebarKey } from './locales.ts'
 
@@ -11,6 +12,7 @@ export type {
   SidebarRootComponentProps, SidebarRootInjected, SidebarSectionOwnerProps, SidebarSettingsOwnerProps,
 } from './contract/slots.ts'
 export type { SidebarKey } from './locales.ts'
+export { getSidebarMode, selectSidebarMode, subscribeSidebarMode, useSidebarMode } from './mode-store.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -37,23 +39,35 @@ export function apply(ctx: ClientContext): void {
     startSession: (workspaceId) => { ctx.workspaces.startSession(workspaceId) },
     toggleSidebar: () => { ctx.layout.toggleSidebar() },
     closeDetails: () => { ctx.layout.closeDetails() },
+    openDetails: () => { ctx.layout.openDetails() },
   })
   ctx.effect(
     () => ctx.slots.register({
       name: 'sidebar',
       locale: NS,
       // The shell owns geometry; ui-workspace registers the whole browsing
-      // region (header, search, session list, workspace dialogs), ui-settings
-      // registers the foot trigger + settings panel.
+      // region (header, search, session list, workspace dialogs). The global
+      // settings trigger is rendered by the layout-level App Rail below.
       children: {
         'sidebar.brand.mark': { kind: 'single', scope: 'root' },
         'sidebar.brand.name': { kind: 'single', scope: 'root' },
         'sidebar.workspaces': { kind: 'chain', scope: 'root' },
-        'sidebar.settings': { kind: 'single', scope: 'root' },
         'sidebar.footer.action': { kind: 'list', scope: 'root' },
       },
       inject: injectProps,
     }, SidebarRoot),
     'ui-sidebar: slot registration',
+  )
+  ctx.effect(
+    () => ctx.slots.register({
+      name: 'appRail',
+      locale: NS,
+      inject: () => ({
+        openDetails: () => { ctx.layout.openDetails() },
+        closeDetails: () => { ctx.layout.closeDetails() },
+      }),
+      children: { 'sidebar.settings': { kind: 'single', scope: 'root' } },
+    }, AppRail),
+    'ui-sidebar: App Rail registration',
   )
 }

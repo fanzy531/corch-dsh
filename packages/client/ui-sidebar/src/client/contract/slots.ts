@@ -3,9 +3,8 @@
  * layout-owned `sidebar` slot, plus the holes this shell declares. The shell
  * owns column geometry (fold state machine, brand row, New Session);
  * everything between the section header and the list bottom is the
- * `sidebar.workspaces` chain, and the foot is the
- * `sidebar.settings` registrant's (ui-settings), followed by optional footer
- * actions in `sidebar.footer.action`.
+ * `sidebar.workspaces` chain, and the foot holds optional footer actions in
+ * `sidebar.footer.action`; the global settings trigger is rendered in App Rail.
  */
 import type { PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: pulls ui-layout's SlotMap merge (the 'sidebar' entry) into every
@@ -34,9 +33,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      */
     'sidebar.workspaces': { kind: 'chain'; scope: 'root'; owner: SidebarSectionOwnerProps }
     /**
-     * The settings seat at the sidebar foot. Declared by this package's
-     * 'sidebar' entry; ui-settings registers its trigger row + modal panel.
-     * The sidebar passes only its column state — it holds no settings state.
+     * The global settings seat rendered in App Rail. Declared by this package's
+     * layout-level navigation entry; ui-settings registers its trigger + modal.
      */
     'sidebar.settings': { kind: 'single'; scope: 'root'; owner: SidebarSettingsOwnerProps }
     /**
@@ -72,10 +70,12 @@ export interface SidebarSectionOwnerProps {
   sidebarMode: SidebarMode
   /** Select the browser that occupies the shared sidebar region. */
   setSidebarMode: (mode: SidebarMode) => void
+  /** Reset a closed details track before opening it again. */
+  reopenDetails?: () => void
 }
 
 /** The two browser surfaces that share the native sidebar region. */
-export type SidebarMode = 'sessions' | 'projects'
+export type SidebarMode = 'sessions' | 'curriculum' | 'interviews'
 
 /**
  * Owner share of the sidebar settings seat: the column display state the
@@ -108,6 +108,8 @@ export type SidebarRootInjected = {
   toggleSidebar: () => void
   /** Close the details panel when leaving a plugin-owned browser mode. */
   closeDetails: () => void
+  /** Open the details panel when entering a plugin-owned browser mode. */
+  openDetails?: () => void
 }
 
 /**
@@ -121,7 +123,6 @@ export type SidebarRootComponentProps =
     | 'sidebar.brand.mark'
     | 'sidebar.brand.name'
     | 'sidebar.workspaces'
-    | 'sidebar.settings'
     | 'sidebar.footer.action'
   >
   & SidebarRootInjected & PropsLocale<'sidebar'>

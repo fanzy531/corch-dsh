@@ -9,6 +9,7 @@ overrides:
   '@deepseek-ai/schemastery': link:vendor/schemastery
 
 patchedDependencies:
+  dsh-better-sidebar@0.17.1: a7985a7ee64e5811c5d64f6d4f8a21806e0267c450f4936c946506bcedbcab9a
   node-pty@1.2.0-beta.15: b40ae545608897914bd25fb009c97eeac478c34e8a910298ddcb01b746534bb0
 
 importers:
@@ -1837,66 +1838,6 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
 
-  packages/client/ui-clab-creator:
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: workspace:^
-        version: link:../../../vendor/cordis
-      '@deepseek-ai/dsh-api-remotes':
-        specifier: workspace:^
-        version: link:../../api/remotes
-      '@deepseek-ai/dsh-attachment':
-        specifier: workspace:^
-        version: link:../../attachment/attachment
-      '@deepseek-ai/dsh-client-connection':
-        specifier: workspace:^
-        version: link:../connection
-      '@deepseek-ai/dsh-client-locale':
-        specifier: workspace:^
-        version: link:../locale
-      '@deepseek-ai/dsh-client-runtime':
-        specifier: workspace:^
-        version: link:../runtime
-      '@deepseek-ai/dsh-client-test-runtime':
-        specifier: workspace:^
-        version: link:../../test-support/client-runtime
-      '@deepseek-ai/dsh-client-ui-conversation':
-        specifier: workspace:^
-        version: link:../ui-conversation
-      '@deepseek-ai/dsh-client-ui-layout':
-        specifier: workspace:^
-        version: link:../ui-layout
-      '@deepseek-ai/dsh-client-ui-primitives':
-        specifier: workspace:^
-        version: link:../ui-primitives
-      '@deepseek-ai/dsh-client-ui-sidebar':
-        specifier: workspace:^
-        version: link:../ui-sidebar
-      '@deepseek-ai/dsh-client-ui-slots':
-        specifier: workspace:^
-        version: link:../ui-slots
-      '@deepseek-ai/dsh-invariants':
-        specifier: workspace:^
-        version: link:../../runtime-diagnostics/invariants
-      '@deepseek-ai/dsh-session':
-        specifier: workspace:^
-        version: link:../../core/session
-      '@deepseek-ai/dsh-system-prompt':
-        specifier: workspace:^
-        version: link:../../core/system-prompt
-      '@deepseek-ai/dsh-tool-clab-creator':
-        specifier: workspace:^
-        version: link:../../workflow/tool-clab-creator
-      '@deepseek-ai/dsh-tools':
-        specifier: workspace:^
-        version: link:../../core/tools
-      '@types/react':
-        specifier: ~18.3.1
-        version: 18.3.31
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-
   packages/client/ui-commands:
     dependencies:
       clsx:
@@ -2548,6 +2489,43 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1
 
+  packages/client/ui-polus-teaching-reform:
+    dependencies:
+      tiny-pinyin:
+        specifier: 1.3.2
+        version: 1.3.2
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-client-connection':
+        specifier: workspace:^
+        version: link:../connection
+      '@deepseek-ai/dsh-client-runtime':
+        specifier: workspace:^
+        version: link:../runtime
+      '@deepseek-ai/dsh-client-test-runtime':
+        specifier: workspace:^
+        version: link:../../test-support/client-runtime
+      '@deepseek-ai/dsh-client-ui-conversation':
+        specifier: workspace:^
+        version: link:../ui-conversation
+      '@deepseek-ai/dsh-client-ui-layout':
+        specifier: workspace:^
+        version: link:../ui-layout
+      '@deepseek-ai/dsh-client-ui-sidebar':
+        specifier: workspace:^
+        version: link:../ui-sidebar
+      '@deepseek-ai/dsh-client-ui-slots':
+        specifier: workspace:^
+        version: link:../ui-slots
+      '@types/react':
+        specifier: ~18.3.1
+        version: 18.3.31
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+
   packages/client/ui-primitives:
     dependencies:
       '@shikijs/langs':
@@ -2909,6 +2887,9 @@ importers:
       clsx:
         specifier: ^2.0.0
         version: 2.1.1
+      react-icons:
+        specifier: 5.7.0
+        version: 5.7.0(react@18.3.1)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:^
@@ -8643,24 +8624,6 @@ importers:
         specifier: workspace:^
         version: link:../web
 
-  packages/workflow/tool-clab-creator:
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: workspace:^
-        version: link:../../../vendor/cordis
-      '@deepseek-ai/dsh-invariants':
-        specifier: workspace:^
-        version: link:../../runtime-diagnostics/invariants
-      '@deepseek-ai/dsh-session':
-        specifier: workspace:^
-        version: link:../../core/session
-      '@deepseek-ai/dsh-system-prompt':
-        specifier: workspace:^
-        version: link:../../core/system-prompt
-      '@deepseek-ai/dsh-tools':
-        specifier: workspace:^
-        version: link:../../core/tools
-
   packages/workflow/tool-ralph:
     dependencies:
       '@deepseek-ai/schemastery':
@@ -14038,6 +14001,11 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
+  react-icons@5.7.0:
+    resolution: {integrity: sha512-LBLy340Rzqy6+/yVhZKT3B/QpP1BZaesGqasf09HPOBzRarcDIFH0WwXlXQfE7q7ipxK4MSiC5DIBWURCny6fw==}
+    peerDependencies:
+      react: '*'
+
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
@@ -14339,6 +14307,9 @@ packages:
   tar@7.5.22:
     resolution: {integrity: sha512-MFO/QzvtAOmJbkhOaCTvbGcFN9L9b+JunIsDwaKljSOdcLMea3NJ1k9Usz/rjdfSXTq4dfzfeS7W4p4YOAAHeA==}
     engines: {node: '>=18'}
+
+  tiny-pinyin@1.3.2:
+    resolution: {integrity: sha512-uHNGu4evFt/8eNLldazeAM1M8JrMc1jshhJJfVRARTN3yT8HEEibofeQ7QETWQ5ISBjd6fKtTVBCC/+mGS6FpA==}
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -19536,6 +19507,10 @@ snapshots:
       react: 18.3.1
       scheduler: 0.23.2
 
+  react-icons@5.7.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
   react-is@17.0.2: {}
 
   react-refresh@0.17.0: {}
@@ -19936,6 +19911,8 @@ snapshots:
       minipass: 7.1.3
       minizlib: 3.1.0
       yallist: 5.0.0
+
+  tiny-pinyin@1.3.2: {}
 
   tinybench@2.9.0: {}
 

@@ -1,4 +1,4 @@
-/** `sidebar` namespace dictionaries: shell controls (brand row, New Session, fold toggle). */
+/** `sidebar` namespace dictionaries: shell controls and App Rail labels. */
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
@@ -6,9 +6,13 @@ export const zh = {
   'session.new.label': '新建会话',
   'toggle.open': '打开侧边栏',
   'toggle.collapse': '收起侧边栏',
-  'sidebarMode.label': '核心功能区',
-  'sidebarMode.sessions': '会话',
-  'sidebarMode.projects': '社媒创作',
+  'appRail.label': '应用导航',
+  'appRail.sessions': '原生会话',
+  'appRail.creator': '内容创作（已移除）',
+  'appRail.projects': '项目（已移除）',
+  'appRail.curriculum': '课程建设',
+  'appRail.interviews': '专家访谈',
+  'appRail.settings': '设置',
 } satisfies Record<string, string>
 
 /** The sidebar namespace key union. */
@@ -20,7 +24,11 @@ export const en = {
   'session.new.label': 'New session',
   'toggle.open': 'Open sidebar',
   'toggle.collapse': 'Collapse sidebar',
-  'sidebarMode.label': 'Core workspace',
-  'sidebarMode.sessions': 'Sessions',
-  'sidebarMode.projects': 'Social creation',
+  'appRail.label': 'App navigation',
+  'appRail.sessions': 'Native sessions',
+  'appRail.creator': 'Content creator (removed)',
+  'appRail.projects': 'Projects (removed)',
+  'appRail.curriculum': 'Curriculum builder',
+  'appRail.interviews': 'Expert interviews',
+  'appRail.settings': 'Settings',
 } satisfies Record<SidebarKey, string>
