@@ -1,0 +1,117 @@
+# 教改 Worker
+
+[English](README.md) | 中文
+
+本文是独立 Go 服务的参考说明，服务生成访谈追问和关联证据的报告，使用 Cobra、GORM 和 MySQL。HTTP API 面向可信应用后端，可选的回环浏览器入口用于本地联调。公开专家身份认证及题目管理由调用应用负责。
+
+## 快速启动
+
+安装 Go 1.25 或更新版本，并创建独立的 MySQL 数据库。实际验收使用 MySQL 8.4；启动时拒绝低于 8.0.13 的 MySQL 和 MariaDB。数据库账号在首次初始化时需要建表权限，之后需要读写权限。
+
+```powershell
+cd worker
+go build -o teaching-worker.exe .
+Copy-Item config.example.yaml config.local.yaml
+# 配置 database.dsn、auth.token、providers.deepseek.api_key。
+.\teaching-worker.exe serve -c config.local.yaml
+```
+
+修改 `providers` 和各提示词的 `model`，使其对应账号可用的接口地址和模型。示例使用 DeepSeek Chat Completions 接口。适配器向 `{base_url}/chat/completions` 发送非流式 JSON 请求；不兼容此协议的服务商需要独立适配器。Linux 下使用 `go build -o teaching-worker .` 编译，再运行 `./teaching-worker serve -c config.local.yaml`。
+
+MySQL 可访问时，`GET /health` 返回 HTTP 200 和 `ready: true`。其他接口需要 `Authorization: Bearer <token>`。共享令牌应保存在应用后端；它可以访问此 Worker 数据库中的全部访谈，不用于识别具体专家。
+
+## 配置
+
+[config.example.yaml](config.example.yaml) 包含完整配置。未知字段、缺失必填值和无效限制会导致启动失败。所有运行参数，包括凭据和提示词，均从 `serve -c` 指定的 YAML 读取，不读取环境变量。`config.local.yaml` 已被 Git 忽略。配置在启动时读取，修改后重启生效。
+
+| 分组 | 设置及行为 |
+|---|---|
+| `mode` | `both` 同时提供 API 和执行任务；`api` 只接收和查询任务；`worker` 只消费任务并提供健康检查。共同部署的进程使用各自的监听地址，并访问同一个数据库。 |
+| `server` | 监听地址、读写及关闭超时、HTTP 请求体上限。 |
+| `database` | 直接填写的 `dsn`、首次建表、连接池大小、连接生命周期、连接及读写超时。`auto_migrate` 初始化结构版本 1，不升级不兼容的数据库。 |
+| `auth` | 直接填写的后端共享 `token`；令牌至少 32 个字符。所有运行模式均必填。 |
+| `queue` | 追问和报告分别设置并发数，以及轮询、租约、心跳、任务超时、尝试次数、重试间隔、输入输出字节上限。限制随任务保存；并发数和轮询间隔属于各运行进程。 |
+| `providers` | 命名接口地址、直接填写的 `api_key` 和请求超时。仅 API 模式允许模型密钥为空；消费者要求每个已配置模型都有密钥。 |
+| `prompts.followup` | 版本、模型参数、每题最多发布追问数、分析提示词和生成提示词。 |
+| `prompts.report` | 独立版本和模型、证据提取及报告生成提示词。`max_followups` 为零。 |
+| `preview` | 可选的本地浏览器入口、页面及问题包路径、Cookie 有效期、轮询间隔及显示的模型标识。要求 `api` 或 `both` 模式，且监听数值形式的回环 IP。 |
+
+租约时长至少为心跳间隔的三倍。MySQL 连接容量应覆盖全部副本，并为心跳和 API 事务留出空间。任务超时覆盖全部阶段。`max_input_bytes` 还限制包含指令和 schema 的完整模型请求；`max_output_bytes` 限制每次服务商响应及合并后的最终结果。
+
+### 调整提示词
+
+修改对应提示词正文、模型参数或服务商公开设置，为受影响的流程设置新 `version`，然后重启。相同版本对应不同内容时启动失败。每个任务保存输入、版本内容及哈希；配置变化后，重试仍使用原版本。凭据不进入版本及其哈希，因此轮换密钥只需重启。消费者按服务商名称从当前 YAML 取密钥；若版本记录的地址不同，则拒绝发送密钥。不提供热更新。
+
+提示词可在既有 JSON 字段内调整追问判断、措辞、报告侧重点和章节标题。输出字段、校验规则、任务状态和两阶段执行顺序由 Go 代码定义；调整这些内容需要修改代码并更新验收。配置不引入任意工作流。
+
+访谈沿用首个任务接收时选定的追问版本，避免访谈中途改变提问规则。报告任务使用接收请求的 API 进程所配置的报告版本。使用新的幂等键，可针对相同的冻结答案生成新编号报告，既有报告仍可查询。若要求新任务版本一致，API 副本应部署相同版本。
+
+## API 与调用方职责
+
+| 请求 | 结果 |
+|---|---|
+| `POST /v1/tasks` | 接收 `followup` 或 `report` 请求，返回 HTTP 202 和已持久化任务。需要 `Content-Type: application/json` 及长度为 1–200 字符的 `Idempotency-Key`。 |
+| `GET /v1/tasks/{id}` | 查询任务状态、尝试次数、错误码、版本及哈希、输出。 |
+| `GET /v1/interviews/{id}/tasks` | 查询访谈任务和报告历史。 |
+
+完整请求见 [examples/followup.json](examples/followup.json) 和 [examples/report.json](examples/report.json)。快照包含访谈 ID、正整数 `input_version` 和 `question_pack_version`、专家背景、带必需槽位的题目及答案。追问的目标答案必须已确认；报告要求每题都有已确认答案或已确认跳过。ID 使用 ASCII 字母、数字、下划线或连字符，最多 100 个字符。
+
+```powershell
+curl.exe http://127.0.0.1:3090/v1/tasks `
+  -H "Authorization: Bearer <auth.token>" `
+  -H "Content-Type: application/json" `
+  -H "Idempotency-Key: interview-demo-followup-1" `
+  --data-binary "@examples/followup.json"
+```
+
+任何快照内容变化都必须递增 `input_version`。旧版本及同版本不同内容返回 HTTP 409。过时追问标记为 `superseded`，不发布输出。请求键在数据库内全局唯一：网络重试使用同一个键；相同键对应不同内容返回 `IDEMPOTENCY_CONFLICT`。不同键提交的追问还按访谈、题目和输入版本去重。因此，同版本的终态失败追问会再次返回原任务，不会隐式创建新任务。
+
+报告接收成功即冻结该访谈的答案，包括报告仍在排队或生成失败的情况。后续追问和更改快照返回 `INTERVIEW_FROZEN`。若需修改已冻结访谈，调用方必须创建新访谈 ID。本地草稿存储不触发入队，也不实现跨设备同步；后端必须提交快照并保存返回的任务 ID。
+
+## 本地浏览器联调
+
+在本目录运行，将本地配置的 `preview.enabled` 设为 `true`，保持 `server.listen: "127.0.0.1:3090"`，通过 `serve -c config.local.yaml` 或 [start-local.ps1](start-local.ps1) 启动。打开[本地访谈](http://127.0.0.1:3090/)。页面及问题包路径相对于进程工作目录。[examples/interview-pack.json](examples/interview-pack.json) 提供三道问题，每题声明模型判断的必需槽位。页面模型标识属于配置文本，不是服务商健康检查结果。
+
+页面将已确认答案提交生成追问，支持补充回答或跳过，全部问题确认后生成报告。草稿使用浏览器本地存储。刷新会从 MySQL 恢复已接收快照及任务并继续轮询，在网络结果不确定时保留任务 ID 和幂等键。报告提交后冻结答案；重新生成产生基于相同答案的新报告版本。开始另一份访谈会创建新 ID，并保留原有数据库记录。
+
+同源 `/browser` 网关通过签名 HttpOnly Cookie 限定访谈范围，拒绝跨源及非回环请求。后端共享令牌和模型密钥不下发浏览器。该入口用于本地调试；公开专家使用时仍需应用身份认证及授权。此入口未连接工作台发布流程。
+
+## 执行与输出
+
+任务从 `queued`、`running` 进入 `succeeded` 或 `failed`；过时追问进入 `superseded`。MySQL 保存队列并提供租约时钟。消费者通过 `FOR UPDATE SKIP LOCKED` 认领任务，续租，并在保存检查点或发布结果前校验认领令牌。消费者被终止后，其任务在租约到期后可重新执行。成功阶段保存检查点，重试可复用分析或提取的证据。
+
+追问先判断 `complete`、`incomplete`、`uncertain` 或 `sensitive`，再至多生成一个问题。跳过项不调用模型。敏感答案、已发布轮次耗尽及模型暂时故障重试耗尽时，返回 `needs_review` 和 `allow_skip: true`。其他无效模型输出明确失败。网络故障、HTTP 408/429 和 5xx 按有上限的指数间隔重试；尝试次数包含首次执行。
+
+报告先从答案逐字提取证据，再生成章节和任务卡。JSON Schema 拒绝不符合字段要求的结果；确定性校验拒绝未知槽位、虚构引文，以及事实或任务卡缺失或未知的引用。陈述区分 `fact`、`interpretation` 和 `needs_verification`。引用有效不代表陈述在逻辑上得到证据支持，仍需人工审阅。
+
+数据库保留快照、提示词版本、阶段输出、模型请求及响应、报告，不记录请求头或密钥值。模型可见输入为配置的系统提示词及输出 schema 指令，之后是独立 JSON 用户消息。这种分离是指令约定，不保证抵御提示词注入。此处未实现保留期及删除策略、逐专家授权、公开服务限流、管理界面和报告导出。模型调用中断且未保存检查点时可能重复调用并计费；队列令牌防止过时结果发布，不保证外部调用恰好一次。
+
+## 服务器部署
+
+[deploy/teaching-worker.service](deploy/teaching-worker.service) 使用不可登录的 `teaching-worker` 系统账号运行 Linux 程序，失败后重启，并读取 `/data/teaching-worker/config.yaml`。`/opt/teaching-worker/current` 指向带版本的发布目录。程序目录需允许服务账号遍历；配置目录保持 `0750 root:teaching-worker`，YAML 保持 `0640 root:teaching-worker`。Worker 的全部运行参数仍在这个 YAML 中。
+
+[deploy/teaching-worker.locations.inc](deploy/teaching-worker.locations.inc) 应放在现有 HTTPS server 块内。`114.132.201.209` 的实际主机目录为 `/data/volume/nginx/conf.d`，容器名为 `nginx-compose`。模板将 `/teaching-worker/v1/` 代理到 `/v1/`，公开 `/teaching-worker/health`；该前缀下其他路径返回 404。Bearer 鉴权头透传给 Worker。前缀根路径重定向到健康检查。
+
+模板上游为 `172.23.0.1:18083`，其中 IP 是 `nginx_default` 的宿主机网关；服务器 YAML 的 `server.listen` 设为相同地址，关闭 `preview.enabled`。MySQL 通过宿主机映射端口 `127.0.0.1:13306` 访问。网关、端口和路由属于部署选择，网络变化时需同步修改 YAML 和 Nginx 片段。共享该数据库的本地浏览器网关可使用 `mode: api`，服务器使用 `mode: both`。
+
+```bash
+systemctl status teaching-worker.service --no-pager
+systemctl restart teaching-worker.service
+journalctl -u teaching-worker.service -n 50 --no-pager
+docker exec nginx-compose nginx -t
+docker exec nginx-compose nginx -s reload
+curl --fail https://114.132.201.209/teaching-worker/health
+```
+
+重载前必须检查 Nginx。保留上一个发布版本，并将受影响的 Nginx 配置备份在 `conf.d` 外，以便回滚。修改提示词或凭据需重启 Worker；修改路由需检查并重载 Nginx。
+
+## 验证
+
+```powershell
+go test ./... -count=1
+go test . -count=1 -args -mysql-config config.local.yaml
+go vet ./...
+go build -o teaching-worker.exe .
+```
+
+验收账号需要创建及删除临时数据库的权限。未提供 `-mysql-config` 时，进程验收明确跳过；该参数仅从指定 YAML 读取 `database.dsn`。测试创建独立临时数据库，编译实际可执行文件，分别启动 API 和消费者进程，覆盖租约恢复、旧结果拦截、消费者并发、幂等、阶段复用、提示词不可变、报告重生成和浏览器会话隔离。[testdata/flow.golden.json](testdata/flow.golden.json) 记录组装后的模型消息和输出。测试使用可控模型接口，不使用文件中的真实模型密钥；真实服务商兼容性及报告质量需要结合真实访谈和凭据单独验收。
