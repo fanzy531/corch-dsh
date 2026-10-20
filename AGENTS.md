@@ -80,6 +80,12 @@ pnpm run demo:cordis    # the agent modifies its own runtime (needs key)
 pnpm run demo:acp       # ACP automation server (needs DEEPSEEK_API_KEY)
 ```
 
+## Subagent coordination
+
+- Use subagents only when parallel work materially helps; otherwise complete the task in the primary agent.
+- Default to one subagent at a time. If a subagent cannot start because its selected model is at capacity, continue in the primary agent and retry later only when parallel work is still useful.
+- Keep the primary agent responsible for the complete outcome; subagent failure must not block the task.
+
 ### Host sandbox failures
 
 When required `gh`, `pnpm`, build, test, or generator commands fail because the agent sandbox blocks credentials, network, IPC, file watching, or nested `sandbox-exec`, retry unchanged with the narrowest host escalation before diagnosing authentication or project failure. Require sandbox evidence; never bypass genuine test failures or the product sandbox under test.

@@ -28,4 +28,47 @@ export type TeachingReformProps = PropsRuntime<'conversation.details.context'> &
   observeInterviewCommands: (id: SessionId, listener: (command: 'regenerate') => void) => () => void
   openExpertMaterialPreview?: (sessionId: SessionId, material: ExpertMaterial) => void
   openGlobalReferencePreview?: (document: GlobalReferenceDocument) => void
+  runJdSearch: (id: SessionId, request: JdSearchRequest) => Promise<readonly JdSearchJob[]>
+  inferJdRoles: (id: SessionId, major: string, direction: string) => Promise<readonly string[]>
+  analyzeJdSearch: (id: SessionId, jobs: readonly JdSearchJob[]) => Promise<JdSearchAnalysis>
+}
+
+export type JdSearchRequest = {
+  major: string
+  direction: string
+  roles: readonly string[]
+  platforms: readonly string[]
+  region: string
+  publishedWithin: string
+  targetCount: string
+}
+
+export type JdSearchJob = {
+  id: string
+  title: string
+  company: string
+  place: string
+  platform: string
+  score: number
+  summary: string
+  sourceUrl?: string
+}
+
+export type JdSearchTask = {
+  title: string
+  count: string
+  description: string
+  evidenceIds: readonly string[]
+}
+
+export type JdSearchAbility = {
+  title: string
+  level: '高频' | '补充'
+  taskCount: number
+  sourceCount: number
+}
+
+export type JdSearchAnalysis = {
+  tasks: readonly JdSearchTask[]
+  abilities: readonly JdSearchAbility[]
 }

@@ -7,14 +7,16 @@ import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { getSidebarMode, subscribeSidebarMode, useSidebarMode } from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { CurriculumSidebar, CurriculumWorkbench } from './CurriculumWorkbench.tsx'
+import { JdSearchSidebar, JdSearchWorkbench } from './JdSearchWorkbench.tsx'
 import { InterviewDetails, InterviewSidebar, rebindInterviewSession, selectInterview } from './InterviewWorkbench.tsx'
 import { loadGlobalReferenceDocumentsForGeneration } from './InterviewSettings.tsx'
 import type { GlobalReferenceDocument } from './InterviewSettings.tsx'
-import type { InterviewProfile, TeachingReformProps } from './types.ts'
+import type { InterviewProfile, JdSearchAbility, JdSearchAnalysis, JdSearchJob, JdSearchRequest, JdSearchTask, TeachingReformProps } from './types.ts'
 import type { ExpertMaterial } from './types.ts'
 import { ExpertMaterialSidebarTab } from './ExpertMaterialSidebarTab.tsx'
 import { GlobalReferenceSidebarTab } from './GlobalReferenceSidebarTab.tsx'
 import { buildInterviewPrompt } from './interviewPrompt.ts'
+import { buildJdAnalysisPrompt, buildJdRoleInferencePrompt, buildJdSearchPrompt } from './jdSearchPrompt.ts'
 
 export const inject = ['sessions', 'workspaces', 'layout', 'connection', 'slots', 'betterSidebar']
 
@@ -44,6 +46,12 @@ type InterviewSnapshotNode = {
   data?: unknown
 }
 type InterviewSession = { subscribe: (listener: () => void) => () => void; getSnapshot: () => { nodes: readonly InterviewSnapshotNode[] } }
+
+type JdAgentFunctions = {
+  inferJdRoles: (id: SessionId, major: string, direction: string) => Promise<readonly string[]>
+  runJdSearch: (id: SessionId, request: JdSearchRequest) => Promise<readonly JdSearchJob[]>
+  analyzeJdSearch: (id: SessionId, jobs: readonly JdSearchJob[]) => Promise<JdSearchAnalysis>
+}
 
 function sessionContainsText(session: InterviewSession, text: string): boolean {
   if (text.trim() === '') return false
@@ -128,6 +136,43 @@ const waitForInterviewResult = async (session: InterviewSession, baselineSeq: nu
   })
 }
 
+const waitForAgentJson = async (session: InterviewSession, baselineSeq: number): Promise<string> => {
+  const read = (): string | null => {
+    const candidates = session.getSnapshot().nodes
+      .filter(node => (node.kind === 'assistant' || node.kind === 'assistant-step') && node.seq > baselineSeq)
+      .toReversed()
+    for (const assistant of candidates) {
+      const data = typeof assistant.data === 'object' && assistant.data !== null ? assistant.data as { status?: string; blocks?: readonly InterviewTextBlock[]; finalNode?: { blocks?: readonly InterviewTextBlock[] } } : undefined
+      const blocks = data?.finalNode?.blocks ?? data?.blocks ?? assistant.blocks
+      const text = blocks?.filter(block => block.kind === 'text' && block.text !== undefined).map(block => block.text).join('\n').trim() ?? ''
+      if (text !== '' && (hasClosedJsonObject(text) || /\"(?:jobs|status|tasks|abilities)\"\s*:/.test(text) && text.includes(']'))) return text
+    }
+    return null
+  }
+  const immediate = read()
+  if (immediate !== null) return immediate
+  return await new Promise<string>((resolve, reject) => {
+    let unsubscribe = (): void => undefined
+    const timeout = window.setTimeout(() => { unsubscribe(); reject(new Error('Agent 已接受任务，但在 5 分钟内未返回可解析结果')) }, 300000)
+    const check = (): void => {
+      const text = read()
+      if (text === null) return
+      window.clearTimeout(timeout)
+      unsubscribe()
+      resolve(text)
+    }
+    unsubscribe = session.subscribe(check)
+    check()
+  })
+}
+
+function parseAgentJson<T>(text: string): T {
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start < 0 || end <= start) throw new Error('Agent 返回内容不是 JSON')
+  try { return JSON.parse(text.slice(start, end + 1)) as T } catch { throw new Error('Agent 返回的 JSON 无法解析') }
+}
+
 function createInterviewAgentFunctions(ctx: ClientContext) {
   const generateInterview = async (id: SessionId, profile: InterviewProfile): Promise<string> => {
     const session = ctx.sessions.binding(id)?.session
@@ -151,11 +196,39 @@ function createInterviewAgentFunctions(ctx: ClientContext) {
       if (/重新生成问题包|重新生成问题|重做问题包/.test(readUserText(latest))) listener('regenerate')
     })
   }
-  return { generateInterview, observeInterviewCommands }
+  const promptAgent = async (id: SessionId, prompt: string): Promise<string> => {
+    const listed = ctx.sessions.list.getSnapshot()
+    const session = ctx.sessions.binding(id)?.session
+      ?? (listed.current === undefined ? undefined : ctx.sessions.binding(listed.current)?.session)
+      ?? listed.ids.map(sessionId => ctx.sessions.binding(sessionId)?.session).find(candidate => candidate !== undefined)
+    if (session === undefined) throw new Error('当前 JD 搜索会话不可用')
+    const baselineSeq = session.getSnapshot().nodes.reduce((max, node) => Math.max(max, node.seq), 0)
+    const result = await session.prompt([{ type: 'text', text: prompt }], 'queue')
+    if (!result.ok) throw new Error(result.error.message)
+    return await waitForAgentJson(session, baselineSeq)
+  }
+  const jdFunctions: JdAgentFunctions = {
+    inferJdRoles: async (id, major, direction) => {
+      const result = parseAgentJson<{ roles?: string[] }>(await promptAgent(id, buildJdRoleInferencePrompt(major, direction)))
+      if (!Array.isArray(result.roles)) throw new Error('Agent 返回结果缺少岗位名称')
+      return result.roles.filter(role => typeof role === 'string' && role.trim() !== '').slice(0, 8)
+    },
+    runJdSearch: async (id, request) => {
+      const result = parseAgentJson<{ jobs?: JdSearchJob[] }>(await promptAgent(id, buildJdSearchPrompt(request)))
+      if (!Array.isArray(result.jobs)) throw new Error('Agent 返回结果缺少 jobs')
+      return result.jobs
+    },
+    analyzeJdSearch: async (id, jobs) => {
+      const result = parseAgentJson<{ tasks?: JdSearchTask[]; abilities?: JdSearchAbility[] }>(await promptAgent(id, buildJdAnalysisPrompt(jobs)))
+      if (!Array.isArray(result.tasks) || !Array.isArray(result.abilities)) throw new Error('Agent 返回结果缺少任务或能力标签')
+      return { tasks: result.tasks, abilities: result.abilities }
+    },
+  }
+  return { generateInterview, observeInterviewCommands, ...jdFunctions }
 }
 
 export function apply(ctx: ClientContext): void {
-  const { generateInterview, observeInterviewCommands } = createInterviewAgentFunctions(ctx)
+  const { generateInterview, observeInterviewCommands, inferJdRoles, runJdSearch, analyzeJdSearch } = createInterviewAgentFunctions(ctx)
   const betterSidebar = ctx.get('betterSidebar') as BetterSidebarService | undefined
   ctx.effect(() => {
     if (betterSidebar === undefined) return () => undefined
@@ -206,6 +279,28 @@ export function apply(ctx: ClientContext): void {
     openInterviewSession(id)
   }
 
+  const createJdSearchSession = async (): Promise<void> => {
+    const workspaceState = ctx.workspaces.list.getSnapshot()
+    const sessionState = ctx.sessions.list.getSnapshot()
+    const current = sessionState.current
+    const currentWorkspace = current === undefined ? undefined : workspaceState.items.find(item => item.sessionIds.includes(current))
+    let workspaceId = currentWorkspace?.workspaceId ?? workspaceState.recentWorkspaceId ?? workspaceState.items[0]?.workspaceId
+    if (workspaceId === undefined) {
+      const connection = ctx.get('connection') as ConnectionHandle
+      const cwd = connection.hostDescription.getSnapshot()?.cwd
+      if (cwd === undefined) throw new Error('cannot create a JD search: Host working directory is not ready')
+      workspaceId = (await ctx.workspaces.create({ path: cwd })).workspaceId
+    }
+    const id = await ctx.workspaces.connectWorkspace(workspaceId, { reuseBlank: false })
+    const session = ctx.sessions.binding(id)?.session
+    if (session === undefined) throw new Error(`created JD search session "${id}" is not available`)
+    const rename = await session.rename('新建 JD 搜索')
+    if (!rename.ok) throw new Error(rename.error.message)
+    selectInterview(String(id))
+    ctx.sessions.open(id)
+    queueMicrotask(() => { ctx.layout.openDetails() })
+  }
+
   // Switching a project must switch the host conversation as well as the
   // workbench selection.  The sidebar record id is the DSH session id for
   // every real interview project.
@@ -244,16 +339,26 @@ export function apply(ctx: ClientContext): void {
     inject: () => ({ createInterviewSession, openInterviewSession, onOpenSettings: () => { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('interview-settings-open')) } }),
   }, InterviewSidebar))
 
+  ctx.slots.inject('sidebar.workspaces', () => ctx.slots.register({
+    name: 'sidebar.workspaces',
+    priority: -7,
+    select: owner => (owner.sidebarMode as string) === 'jd-search' ? {} : null,
+    inject: () => ({ createJdSearchSession }),
+  }, JdSearchSidebar))
+
   // The details slot already supplies the live sessionId and runtime props;
   // this wrapper only selects one of the two teaching-reform workbenches.
   ctx.slots.inject('conversation.details.context', () => {
     let disposeRegistration: (() => void) | undefined
     const reconcile = (): void => {
       disposeRegistration?.()
-      disposeRegistration = getSidebarMode() === 'curriculum' || getSidebarMode() === 'interviews'
+      disposeRegistration = getSidebarMode() === 'curriculum' || getSidebarMode() === 'interviews' || getSidebarMode() === 'jd-search'
         ? ctx.slots.register({ name: 'conversation.details.context', inject: () => ({
           generateInterview,
           observeInterviewCommands,
+          runJdSearch,
+          inferJdRoles,
+          analyzeJdSearch,
           openExpertMaterialPreview: (sessionId: SessionId, material: ExpertMaterial) => {
             betterSidebar?.openTab?.({
               id: `polus-teaching-reform:expert-material:${material.id}`,
@@ -278,6 +383,7 @@ export function apply(ctx: ClientContext): void {
 function TeachingReformDetailsRouter(props: TeachingReformProps): ReactNode {
   const mode = useSidebarMode() as string
   if (mode === 'curriculum') return createElement(CurriculumWorkbench, props)
+  if (mode === 'jd-search') return createElement(JdSearchWorkbench, props)
   return createElement(InterviewDetails, props)
 }
 
