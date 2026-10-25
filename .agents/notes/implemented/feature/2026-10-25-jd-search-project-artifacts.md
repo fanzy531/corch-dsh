@@ -1,0 +1,27 @@
+# Agent Note: JD Search Projects and Workspace Artifacts
+
+Status: implemented
+
+English | [中文](2026-10-25-jd-search-project-artifacts.zh.md)
+
+## Problem
+
+A completed JD search needs a durable project entry that users can reopen, and its cleaned job descriptions and generated typical-work-task report need to remain available in the DSH workspace.
+
+## Decision
+
+The workbench stores project metadata in browser local storage keyed by the DSH session id and opens the corresponding session from the sidebar. The running client retains an in-memory index when browser storage is unavailable. Exclusion changes invalidate stale analysis and reports. A completed search renames that session and asks its workspace file tools to write `outputs/jd-search/<session-id>/jobs.json`. After analysis, the same session writes `typical-work-tasks.md` and a template-styled `typical-work-tasks.html` beside the job data. The workbench opens the saved HTML through the host default application, normally a browser. The report contains confirmed JD evidence, verb-led independent tasks, sample frequency hints, and professional ability tags. Frequency describes coverage in the current sample and does not estimate the labor market.
+
+The analysis prompt follows the JD-driven capability mapping method: retain evidence ids, merge semantically equivalent tasks, exclude vague support or participation statements as standalone tasks, and map only to professional ability tags. Search results retain cleaned JD bodies alongside summaries and source URLs.
+
+## Alternatives considered
+
+**Write files directly through a client filesystem API:** the workbench's client workspace service exposes workspace and file navigation, but no write operation. The active session's DSH file tools provide workspace-scoped writes without adding a new client API.
+
+**Store all job content only in browser storage:** this would make artifacts browser-specific and would not provide deliverable files in the DSH workspace.
+
+**Create the project only after analysis:** users would lose the searchable project entry when analysis is delayed or fails. The project is listed immediately after search results arrive; subsequent artifact errors remain visible without removing it.
+
+## Consequences
+
+Project metadata follows browser local storage and is specific to the browser origin. Job data and reports live in the DSH workspace and depend on the active session being available and its file tools completing the requested write. File paths are stored with the project for reopening and troubleshooting. A failed artifact write does not hide the search results or remove the sidebar project.

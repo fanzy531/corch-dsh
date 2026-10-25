@@ -31,6 +31,9 @@ export type TeachingReformProps = PropsRuntime<'conversation.details.context'> &
   runJdSearch: (id: SessionId, request: JdSearchRequest) => Promise<readonly JdSearchJob[]>
   inferJdRoles: (id: SessionId, major: string, direction: string) => Promise<readonly string[]>
   analyzeJdSearch: (id: SessionId, jobs: readonly JdSearchJob[]) => Promise<JdSearchAnalysis>
+  renameJdSearchProject: (id: SessionId, title: string) => Promise<void>
+  saveJdSearchArtifacts: (id: SessionId, artifacts: readonly { path: string; contents: string }[]) => Promise<void>
+  openJdSearchReport: (id: SessionId, path: string) => Promise<void>
 }
 
 export type JdSearchRequest = {
@@ -51,12 +54,14 @@ export type JdSearchJob = {
   platform: string
   score: number
   summary: string
+  /** Cleaned job-description body returned from the source page. */
+  body?: string
   sourceUrl?: string
 }
 
 export type JdSearchTask = {
   title: string
-  count: string
+  freqHint: number
   description: string
   evidenceIds: readonly string[]
 }
@@ -71,4 +76,19 @@ export type JdSearchAbility = {
 export type JdSearchAnalysis = {
   tasks: readonly JdSearchTask[]
   abilities: readonly JdSearchAbility[]
+}
+
+export type JdSearchProject = {
+  sessionId: string
+  title: string
+  request: JdSearchRequest
+  jobs: readonly JdSearchJob[]
+  excludedJobIds?: readonly string[]
+  confirmedJobIds?: readonly string[]
+  analysis?: JdSearchAnalysis
+  jobsPath: string
+  reportPath?: string
+  htmlReportPath?: string
+  reportSavedAt?: string
+  updatedAt: string
 }
