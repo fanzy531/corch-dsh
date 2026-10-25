@@ -90,5 +90,6 @@ export type JdSearchProject = {
   reportPath?: string
   htmlReportPath?: string
   reportSavedAt?: string
+  finalizedAt?: string
   updatedAt: string
 }
